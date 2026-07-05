@@ -4,83 +4,30 @@ import path from 'path';
 import crypto from 'crypto';
 import pg from 'pg';
 import nodemailer from 'nodemailer';
-const { Pool } = pg;
+import dns from 'dns';
 
+// Forzar IPv4 para evitar errores de red en Render
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
+const { Pool } = pg;
 const PORT = process.env.PORT || 3001;
 
-// Cargar variables de entorno desde el archivo .env manualmente
-try {
-  const envPath = path.join(process.cwd(), '.env');
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split('\n').forEach(line => {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith('#')) {
-        const index = trimmed.indexOf('=');
-        if (index !== -1) {
-          const key = trimmed.substring(0, index).trim();
-          const value = trimmed.substring(index + 1).trim().replace(/^['"]|['"]$/g, '');
-          process.env[key] = value;
-        }
-      }
-    });
-    console.log('Variables de entorno cargadas desde .env con éxito.');
-  }
-} catch (err) {
-  console.warn('Advertencia al cargar archivo .env:', err.message);
-}
-
-// db-server.js - Versión Corregida para Render y Supabase
-const proceso = require('process'); // Asegúrate de tener esto al inicio
-const { Piscina } = require('piscina-library'); // O la librería que estés usando
-const nodemailer = require('nodemailer');
-
-// --- Configuración de conexión de Postgres ---
-// Esta es la parte que corregimos para evitar el 'localhost'
-const piscina = new Piscina({
-  connectionString: process.env.DATABASE_URL, 
-  ssl: {
-    rejectUnauthorized: false
-  }
+// Configuración ÚNICA de conexión a Supabase
+// Usamos DATABASE_URL que es la variable estándar de Render/Supabase
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-consola.registro('Conexión configurada con éxito para Supabase.');
-
-// --- Configuración de Nodemailer Transporter ---
-let Transportista_de_correo = null;
-
-if (process.env.RESEND_API_KEY) {
-  Transportista_de_correo = nodemailer.createTransport({
-    host: 'smtp.resend.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'reenviar',
-      pass: process.env.RESEND_API_KEY
-    }
-  });
-  consola.registro('Transportador de correo configurado con Resend (producción).');
-} else {
-  consola.registro('RESEND_API_KEY no encontrado. Los correos serán simulados en consola.');
-}
-
-// Configuración de Nodemailer Transporter
-// En producción usa Resend (via SMTP); en local simula el envío si no hay API key
-let mailTransporter = null;
-if (process.env.RESEND_API_KEY) {
-  mailTransporter = nodemailer.createTransport({
-    host: 'smtp.resend.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'resend',
-      pass: process.env.RESEND_API_KEY
-    }
-  });
-  console.log('Transporter de correo configurado con Resend (producción).');
-} else {
-  console.log('RESEND_API_KEY no encontrada. Los correos serán simulados en consola (modo local).');
-}
+// Configuración ÚNICA de correo
+const mailTransporter = process.env.RESEND_API_KEY ? nodemailer.createTransport({
+  host: 'smtp.resend.com',
+  port: 465,
+  secure: true,
+  auth: { user: 'resend', pass: process.env.RESEND_API_KEY }
+}) : null;
 
 
 // Mapa en memoria para el rate limiting de inicio de sesión (Clave: email, Valor: { attempts: número, lockUntil: timestamp })
@@ -1035,5 +982,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Servidor base de datos proxy local ejecutándose en http://localhost:${PORT}`);
-});
+  console.log('Servidor ejecutándose correctamente en el puerto ${PORT}');
