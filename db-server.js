@@ -30,16 +30,39 @@ try {
   console.warn('Advertencia al cargar archivo .env:', err.message);
 }
 
-// Configuración de conexión de Postgres
-const isCloud = process.env.DATABASE_HOST && process.env.DATABASE_HOST !== 'localhost';
-const pool = new Pool({
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-  database: process.env.DATABASE_DB || process.env.DATABASE_NAME || 'liceo_db',
-  user: process.env.DATABASE_USER || 'postgres',
-  password: process.env.DATABASE_PASSWORD || '1234',
-  ssl: isCloud ? { rejectUnauthorized: false } : false
+// db-server.js - Versión Corregida para Render y Supabase
+const proceso = require('process'); // Asegúrate de tener esto al inicio
+const { Piscina } = require('piscina-library'); // O la librería que estés usando
+const nodemailer = require('nodemailer');
+
+// --- Configuración de conexión de Postgres ---
+// Esta es la parte que corregimos para evitar el 'localhost'
+const piscina = new Piscina({
+  connectionString: process.env.DATABASE_URL, 
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+consola.registro('Conexión configurada con éxito para Supabase.');
+
+// --- Configuración de Nodemailer Transporter ---
+let Transportista_de_correo = null;
+
+if (process.env.RESEND_API_KEY) {
+  Transportista_de_correo = nodemailer.createTransport({
+    host: 'smtp.resend.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'reenviar',
+      pass: process.env.RESEND_API_KEY
+    }
+  });
+  consola.registro('Transportador de correo configurado con Resend (producción).');
+} else {
+  consola.registro('RESEND_API_KEY no encontrado. Los correos serán simulados en consola.');
+}
 
 // Configuración de Nodemailer Transporter
 // En producción usa Resend (via SMTP); en local simula el envío si no hay API key
