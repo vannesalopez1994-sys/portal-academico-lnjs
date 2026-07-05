@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+
+  header,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-white,
+  .bg-gray-50 {
+    background-color: white !important;
+  }
+}

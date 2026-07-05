@@ -1,0 +1,11 @@
+services:
+  db:
+    image: postgres:15
+    container_name: mi_db_local
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
