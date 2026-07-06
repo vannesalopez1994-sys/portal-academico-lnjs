@@ -4,7 +4,13 @@ import path from 'path';
 import crypto from 'crypto';
 import pg from 'pg';
 import nodemailer from 'nodemailer';
+import dns from 'dns';
 const { Pool } = pg;
+
+// Forzar a Node.js a priorizar IPv4 sobre IPv6 (Evita ENETUNREACH en Render)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const PORT = process.env.PORT || 3001;
 
