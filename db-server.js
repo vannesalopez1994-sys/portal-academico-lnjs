@@ -36,16 +36,37 @@ try {
   console.warn('Advertencia al cargar archivo .env:', err.message);
 }
 
-// Configuración de conexión de Postgres
-const isCloud = process.env.DATABASE_HOST && process.env.DATABASE_HOST !== 'localhost';
-const pool = new Pool({
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-  database: process.env.DATABASE_DB || process.env.DATABASE_NAME || 'liceo_db',
-  user: process.env.DATABASE_USER || 'postgres',
-  password: process.env.DATABASE_PASSWORD || '1234',
-  ssl: isCloud ? { rejectUnauthorized: false } : false
+// db-server.js - Versión Corregida para Render y Supabase
+const proceso = require('process'); // Asegúrate de tener esto al inicio
+const { Piscina } = require('piscina-library'); // O la librería que estés usando
+// --- Configuración de conexión de Postgres ---
+// Esta es la parte que corregimos para evitar el 'localhost'
+const piscina = new Piscina({
+  connectionString: process.env.DATABASE_URL, 
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+consola.registro('Conexión configurada con éxito para Supabase.');
+
+// --- Configuración de Nodemailer Transporter ---
+let Transportista_de_correo = null;
+
+if (process.env.RESEND_API_KEY) {
+  Transportista_de_correo = nodemailer.createTransport({
+    host: 'smtp.resend.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'reenviar',
+      pass: process.env.RESEND_API_KEY
+    }
+  });
+  consola.registro('Transportador de correo configurado con Resend (producción).');
+} else {
+  consola.registro('RESEND_API_KEY no encontrado. Los correos serán simulados en consola.');
+}
 
 // Configuración de Nodemailer Transporter
 // En producción usa Resend (via SMTP); en local simula el envío si no hay API key
@@ -104,21 +125,21 @@ async function initDb(retries = 5, delay = 2000) {
 
     // Migraciones de columnas: agregar campos nuevos si no existen
     const migrations = [
-      `ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS ano_escolar VARCHAR(20)`,
-      `ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS seccion VARCHAR(20)`,
-      `ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS comentario_institucion TEXT`,
-      `ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)`,
-      `ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ`,
-      `ALTER TABLE IF EXISTS public.usuarios ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'activo'`,
-      `ALTER TABLE IF EXISTS public.horarios ADD COLUMN IF NOT EXISTS anio_escolar TEXT`,
-      `ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS telefono_representante VARCHAR(30)`,
+      ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS ano_escolar VARCHAR(20),
+      ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS seccion VARCHAR(20),
+      ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS comentario_institucion TEXT,
+      ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255),
+      ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ,
+      ALTER TABLE IF EXISTS public.usuarios ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'activo',
+      ALTER TABLE IF EXISTS public.horarios ADD COLUMN IF NOT EXISTS anio_escolar TEXT,
+      ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS telefono_representante VARCHAR(30),
     ];
     for (const migration of migrations) {
       try {
         await pool.query(migration);
-        console.log(`Migración ejecutada: ${migration}`);
+        console.log(Migración ejecutada: ${migration});
       } catch (migErr) {
-        console.warn(`Advertencia en migración: ${migErr.message}`);
+        console.warn(Advertencia en migración: ${migErr.message});
       }
     }
     console.log('Migraciones de columnas verificadas.');
@@ -167,7 +188,7 @@ async function initDb(retries = 5, delay = 2000) {
   } catch (err) {
     console.error('Error inicializando base de datos local:', err.message);
     if (retries > 0) {
-      console.log(`Reintentando inicialización de base de datos en ${delay / 1000}s... (intentos restantes: ${retries})`);
+      console.log(Reintentando inicialización de base de datos en ${delay / 1000}s... (intentos restantes: ${retries}));
       setTimeout(() => initDb(retries - 1, delay), delay);
     }
   }
@@ -212,10 +233,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const urlObj = new URL(req.url, http://${req.headers.host || 'localhost'});
   const pathname = urlObj.pathname;
 
-  console.log(`[${req.method}] ${pathname}`);
+  console.log([${req.method}] ${pathname});
 
   try {
     // ----------------------------------------------------
@@ -287,10 +308,10 @@ const server = http.createServer(async (req, res) => {
         const filterStrings = filters.map(f => {
           if (f.type === 'eq') {
             if (f.value === null) {
-              return `t."${f.field}" IS NULL`;
+              return t."${f.field}" IS NULL;
             } else {
               params.push(f.value);
-              return `t."${f.field}" = $${paramIndex++}`;
+              return t."${f.field}" = $${paramIndex++};
             }
           }
           return '1=1';
@@ -319,12 +340,12 @@ const server = http.createServer(async (req, res) => {
           selectFields = 't.*, r.nombre_rol as roles_nombre_rol';
           joinClause = ' LEFT JOIN public.roles r ON t.id_rol = r.id_rol';
         } else if (fields && fields !== '*') {
-          selectFields = fields.split(',').map(f => `t."${f.trim()}"`).join(', ');
+          selectFields = fields.split(',').map(f => t."${f.trim()}").join(', ');
         } else {
           selectFields = 't.*';
         }
 
-        sql = `SELECT ${selectFields} FROM public."${table}" t${joinClause}${whereClause}${orderClause}${limitClause}`;
+        sql = SELECT ${selectFields} FROM public."${table}" t${joinClause}${whereClause}${orderClause}${limitClause};
       } 
       else if (action === 'insert') {
         if (!data || (Array.isArray(data) && data.length === 0)) {
@@ -340,11 +361,11 @@ const server = http.createServer(async (req, res) => {
         const valueRows = rows.map(row => {
           return '(' + keys.map(k => {
             params.push(row[k]);
-            return `$${paramIndex++}`;
+            return $${paramIndex++};
           }).join(', ') + ')';
         }).join(', ');
 
-        sql = `INSERT INTO public."${table}" (${keys.map(k => `"${k}"`).join(', ')}) VALUES ${valueRows} RETURNING *`;
+        sql = INSERT INTO public."${table}" (${keys.map(k => `"${k}").join(', ')}) VALUES ${valueRows} RETURNING *`;
       } 
       else if (action === 'update') {
         if (table === 'usuarios') {
@@ -377,13 +398,13 @@ const server = http.createServer(async (req, res) => {
         const keys = Object.keys(data);
         const setClause = keys.map(k => {
           params.push(data[k]);
-          return `"${k}" = $${paramIndex++}`;
+          return "${k}" = $${paramIndex++};
         }).join(', ');
 
         // En updates no usamos alias t en SET, pero en WHERE sí para coherencia, o removemos alias t
         // Para simplificar, hacemos update sin alias en la tabla principal
         const simpleWhere = whereClause.replace(/t\./g, '');
-        sql = `UPDATE public."${table}" SET ${setClause}${simpleWhere} RETURNING *`;
+        sql = UPDATE public."${table}" SET ${setClause}${simpleWhere} RETURNING *;
       } 
       else if (action === 'delete') {
         if (table === 'usuarios') {
@@ -398,7 +419,7 @@ const server = http.createServer(async (req, res) => {
           }
         }
         const simpleWhere = whereClause.replace(/t\./g, '');
-        sql = `DELETE FROM public."${table}"${simpleWhere} RETURNING *`;
+        sql = DELETE FROM public."${table}"${simpleWhere} RETURNING *;
       } 
       else if (action === 'upsert') {
         if (!data || (Array.isArray(data) && data.length === 0)) {
@@ -414,23 +435,23 @@ const server = http.createServer(async (req, res) => {
         const valueRows = rows.map(row => {
           return '(' + keys.map(k => {
             params.push(row[k]);
-            return `$${paramIndex++}`;
+            return $${paramIndex++};
           }).join(', ') + ')';
         }).join(', ');
 
         const conflictKey = onConflict || 'id';
-        const updateSet = keys.filter(k => k !== conflictKey).map(k => `"${k}" = EXCLUDED."${k}"`).join(', ');
+        const updateSet = keys.filter(k => k !== conflictKey).map(k => "${k}" = EXCLUDED."${k}").join(', ');
 
-        sql = `INSERT INTO public."${table}" (${keys.map(k => `"${k}"`).join(', ')}) VALUES ${valueRows} 
+        sql = INSERT INTO public."${table}" (${keys.map(k => `"${k}").join(', ')}) VALUES ${valueRows} 
                ON CONFLICT ("${conflictKey}") DO UPDATE SET ${updateSet} RETURNING *`;
       }
 
-      console.log(`Ejecutando SQL: ${sql} | Params: ${JSON.stringify(params)}`);
+      console.log(Ejecutando SQL: ${sql} | Params: ${JSON.stringify(params)});
 
       // Ejecutar conteo exacto si se pide y no es head-only sin datos
       let totalCount = null;
       if (count === 'exact') {
-        const countSql = `SELECT COUNT(*) as count FROM public."${table}" t${whereClause}`;
+        const countSql = SELECT COUNT(*) as count FROM public."${table}" t${whereClause};
         // Para count usamos los mismos parámetros que el filter
         const countRes = await pool.query(countSql, params.slice(0, (whereClause.match(/\$\d+/g) || []).length));
         totalCount = parseInt(countRes.rows[0].count, 10);
@@ -478,7 +499,7 @@ const server = http.createServer(async (req, res) => {
           error: null 
         }));
       } catch (sqlErr) {
-        console.error(`Error ejecutando SQL en tabla "${table}" (${action}):`, sqlErr.message);
+        console.error(Error ejecutando SQL en tabla "${table}" (${action}):, sqlErr.message);
         res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ 
           data: null, 
@@ -499,11 +520,11 @@ const server = http.createServer(async (req, res) => {
       const keys = Object.keys(args || {});
       const placeholders = keys.map(k => {
         params.push(args[k]);
-        return `$${paramIndex++}`;
+        return $${paramIndex++};
       }).join(', ');
 
-      const sql = `SELECT * FROM public."${name}"(${placeholders})`;
-      console.log(`Ejecutando RPC SQL: ${sql} | Params: ${JSON.stringify(params)}`);
+      const sql = SELECT * FROM public."${name}"(${placeholders});
+      console.log(Ejecutando RPC SQL: ${sql} | Params: ${JSON.stringify(params)});
 
       try {
         const dbRes = await pool.query(sql, params);
@@ -514,7 +535,7 @@ const server = http.createServer(async (req, res) => {
         console.error('Error en RPC:', err.message);
         // Intentar ejecutar como void CALL o SELECT void
         try {
-          await pool.query(`SELECT public."${name}"(${placeholders})`, params);
+          await pool.query(SELECT public."${name}"(${placeholders}), params);
           res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: null, error: null }));
         } catch (innerErr) {
@@ -589,7 +610,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(429, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ 
             data: { user: null, session: null }, 
-            error: { message: `Demasiados intentos fallidos. Tu cuenta está bloqueada. Inténtalo de nuevo en ${remainingMin} minuto(s).` } 
+            error: { message: Demasiados intentos fallidos. Tu cuenta está bloqueada. Inténtalo de nuevo en ${remainingMin} minuto(s). } 
           }));
           return;
         }
@@ -633,7 +654,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: `Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de bloquear la cuenta.` } 
+              error: { message: Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de bloquear la cuenta. } 
             }));
           }
           return;
@@ -695,7 +716,7 @@ const server = http.createServer(async (req, res) => {
         );
         const valid = dbRes.rows.length > 0;
         if (!valid) {
-          console.log(`[Auth] validate-session: userId ${userId} not found in auth.users — session is stale.`);
+          console.log([Auth] validate-session: userId ${userId} not found in auth.users — session is stale.);
         }
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ valid }));
@@ -774,11 +795,11 @@ const server = http.createServer(async (req, res) => {
         );
 
         // 3. Generar enlace de recuperación
-        const resetLink = `${redirectTo || 'http://localhost:5173/reset-password'}?token=${token}`;
+        const resetLink = ${redirectTo || 'http://localhost:5173/reset-password'}?token=${token};
 
         // 4. Enviar correo usando nodemailer
         const mailOptions = {
-          from: `"Liceo Joaquina Sánchez" <${process.env.SMTP_USER || 'no-reply@liceojoaquinasanchez.edu.ve'}>`,
+          from: "Liceo Joaquina Sánchez" <${process.env.SMTP_USER || 'no-reply@liceojoaquinasanchez.edu.ve'}>,
           to: email,
           subject: 'Recuperar Acceso al Sistema - L.N. Joaquina Sánchez',
           html: `
@@ -819,15 +840,15 @@ const server = http.createServer(async (req, res) => {
               subject: mailOptions.subject,
               html: mailOptions.html
             });
-            console.log(`Correo de recuperación enviado exitosamente a: ${email}`);
+            console.log(Correo de recuperación enviado exitosamente a: ${email});
           } catch (mailErr) {
             console.error('Error enviando correo via Resend:', mailErr.message);
             // No bloqueamos el flujo si falla el correo; el token ya está guardado
           }
         } else {
           console.log("--- SIMULACIÓN LOCAL: Correo de recuperación ---");
-          console.log(`Para: ${email}`);
-          console.log(`Enlace: ${resetLink}`);
+          console.log(Para: ${email});
+          console.log(Enlace: ${resetLink});
           console.log("-----------------------------------------------");
         }
 
@@ -961,7 +982,7 @@ const server = http.createServer(async (req, res) => {
       req.pipe(writeStream);
 
       writeStream.on('finish', () => {
-        console.log(`Archivo guardado exitosamente en: ${destPath}`);
+        console.log(Archivo guardado exitosamente en: ${destPath});
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ data: { path: filePath }, error: null }));
       });
@@ -1008,7 +1029,7 @@ const server = http.createServer(async (req, res) => {
 
     // Ruta 404 por defecto para API
     res.writeHead(404, { 'Content-Type': 'application/json', ...corsHeaders });
-    res.end(JSON.stringify({ error: { message: `Ruta ${pathname} no encontrada` } }));
+    res.end(JSON.stringify({ error: { message: Ruta ${pathname} no encontrada } }));
 
   } catch (err) {
     console.error('Error procesando petición:', err);
@@ -1018,5 +1039,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Servidor base de datos proxy local ejecutándose en http://localhost:${PORT}`);
+  console.log(Servidor base de datos proxy local ejecutándose en http://localhost:${PORT});
 });
