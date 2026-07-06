@@ -33,8 +33,6 @@ try {
 // db-server.js - Versión Corregida para Render y Supabase
 const proceso = require('process'); // Asegúrate de tener esto al inicio
 const { Piscina } = require('piscina-library'); // O la librería que estés usando
-const nodemailer = require('nodemailer');
-
 // --- Configuración de conexión de Postgres ---
 // Esta es la parte que corregimos para evitar el 'localhost'
 const piscina = new Piscina({
