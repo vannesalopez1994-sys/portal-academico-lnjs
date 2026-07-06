@@ -44,9 +44,9 @@ let resolvedDbHost = dbHostname;
 
 if (dbHostname !== 'localhost' && dbHostname !== '127.0.0.1') {
   try {
-    const ipv4Addresses = await dns.promises.resolve4(dbHostname);
-    if (ipv4Addresses && ipv4Addresses.length > 0) {
-      resolvedDbHost = ipv4Addresses[0];
+    const lookupResult = await dns.promises.lookup(dbHostname, { family: 4 });
+    if (lookupResult && lookupResult.address) {
+      resolvedDbHost = lookupResult.address;
       console.log(`DNS resuelto (IPv4): ${dbHostname} → ${resolvedDbHost}`);
     }
   } catch (dnsErr) {
