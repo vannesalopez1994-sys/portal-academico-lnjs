@@ -37,10 +37,26 @@ try {
   console.warn('Advertencia al cargar archivo .env:', err.message);
 }
 
-// Configuración de la conexión PostgreSQL (Soporta local y producción en la nube)
-const isCloud = process.env.DATABASE_HOST && process.env.DATABASE_HOST !== 'localhost';
+// Resolver hostname a IPv4 explícito ANTES de crear el Pool
+// Esto evita el error ENETUNREACH cuando Render intenta conectarse via IPv6 a Supabase
+const dbHostname = process.env.DATABASE_HOST || 'localhost';
+let resolvedDbHost = dbHostname;
+
+if (dbHostname !== 'localhost' && dbHostname !== '127.0.0.1') {
+  try {
+    const ipv4Addresses = await dns.promises.resolve4(dbHostname);
+    if (ipv4Addresses && ipv4Addresses.length > 0) {
+      resolvedDbHost = ipv4Addresses[0];
+      console.log(`DNS resuelto (IPv4): ${dbHostname} → ${resolvedDbHost}`);
+    }
+  } catch (dnsErr) {
+    console.warn(`No se pudo resolver IPv4 para ${dbHostname}: ${dnsErr.message}. Usando hostname original.`);
+  }
+}
+
+const isCloud = dbHostname !== 'localhost' && dbHostname !== '127.0.0.1';
 const pool = new Pool({
-  host: process.env.DATABASE_HOST || 'localhost',
+  host: resolvedDbHost,
   port: parseInt(process.env.DATABASE_PORT || '5432', 10),
   database: process.env.DATABASE_DB || process.env.DATABASE_NAME || 'liceo_db',
   user: process.env.DATABASE_USER || 'postgres',
@@ -48,7 +64,7 @@ const pool = new Pool({
   ssl: isCloud ? { rejectUnauthorized: false } : false
 });
 
-console.log('Conexión configurada con éxito para la Base de Datos.');
+console.log(`Conexión configurada con éxito para la Base de Datos (host: ${resolvedDbHost}).`);
 
 // Configuración unificada de Nodemailer Transporter (Resend para producción)
 let mailTransporter = null;
