@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node db-server.js",
+    "server": "node db-server.js",
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
