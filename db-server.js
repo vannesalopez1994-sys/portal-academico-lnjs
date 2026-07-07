@@ -66,21 +66,42 @@ const pool = new Pool({
 
 console.log(`Conexión configurada con éxito para la Base de Datos (host: ${resolvedDbHost}).`);
 
-// Configuración unificada de Nodemailer Transporter (Resend para producción)
-let mailTransporter = null;
-if (process.env.RESEND_API_KEY) {
-  mailTransporter = nodemailer.createTransport({
-    host: 'smtp.resend.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'resend',
-      pass: process.env.RESEND_API_KEY
+// Función para enviar correos usando la API REST de Resend (evita bloqueos SMTP)
+async function sendEmail({ to, subject, html }) {
+  if (process.env.RESEND_API_KEY) {
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'Portal Académico <onboarding@resend.dev>';
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: [to],
+          subject: subject,
+          html: html
+        })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Error en la API de Resend');
+      }
+      console.log(`Correo enviado con éxito a: ${to} (ID: ${resData.id})`);
+      return { success: true, id: resData.id };
+    } catch (err) {
+      console.error(`Error enviando correo via Resend REST: ${err.message}`);
+      return { success: false, error: err.message };
     }
-  });
-  console.log('Transporter de correo configurado con Resend (producción).');
-} else {
-  console.log('RESEND_API_KEY no encontrada. Los correos serán simulados en consola (modo local).');
+  } else {
+    console.log("--- SIMULACIÓN LOCAL: Correo de recuperación ---");
+    console.log(`Para: ${to}`);
+    console.log(`Asunto: ${subject}`);
+    console.log("-----------------------------------------------");
+    return { success: true, simulated: true };
+  }
 }
 
 // Mapa en memoria para el rate limiting de inicio de sesión
@@ -802,24 +823,16 @@ const server = http.createServer(async (req, res) => {
           `
         };
 
-        if (mailTransporter) {
-          try {
-            const fromAddress = process.env.RESEND_FROM_EMAIL || 'Portal Académico <no-reply@resend.dev>';
-            await mailTransporter.sendMail({
-              from: fromAddress,
-              to: email,
-              subject: mailOptions.subject,
-              html: mailOptions.html
-            });
-            console.log(`Correo de recuperación enviado exitosamente a: ${email}`);
-          } catch (mailErr) {
-            console.error('Error enviando correo via Resend:', mailErr.message);
-          }
-        } else {
-          console.log("--- SIMULACIÓN LOCAL: Correo de recuperación ---");
-          console.log(`Para: ${email}`);
-          console.log(`Enlace: ${resetLink}`);
-          console.log("-----------------------------------------------");
+        const emailResult = await sendEmail({
+          to: email,
+          subject: mailOptions.subject,
+          html: mailOptions.html
+        });
+
+        if (!emailResult.success) {
+          res.writeHead(500, { 'Content-Type': 'application/json', ...corsHeaders });
+          res.end(JSON.stringify({ data: null, error: { message: `Error enviando correo: ${emailResult.error}` } }));
+          return;
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
