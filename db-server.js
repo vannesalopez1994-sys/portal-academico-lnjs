@@ -58,7 +58,7 @@ const isCloud = dbHostname !== 'localhost' && dbHostname !== '127.0.0.1';
 const pool = new Pool({
   host: resolvedDbHost,
   port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-  database: process.env.DATABASE_DB || process.env.DATABASE_NAME || 'liceo_db',
+  database: process.env.DATABASE_DB || process.env.DATABASE_NAME || 'postgres',
   user: process.env.DATABASE_USER || 'postgres',
   password: process.env.DATABASE_PASSWORD || '1234',
   ssl: isCloud ? { rejectUnauthorized: false } : false
@@ -91,12 +91,10 @@ async function initDb(retries = 5, delay = 2000) {
   try {
     console.log('Verificando inicialización de base de datos...');
     
-    // Crear esquema auth
-    await pool.query('CREATE SCHEMA IF NOT EXISTS auth;');
-    
-    // Crear tabla auth.users si no existe
+    // Nota: El esquema 'auth' es gestionado por Supabase. Solo creamos public.auth_users.
+    // Crear tabla public.auth_users si no existe
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS auth.users (
+      CREATE TABLE IF NOT EXISTS public.auth_users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) UNIQUE NOT NULL,
         encrypted_password VARCHAR(255) NOT NULL,
@@ -119,15 +117,15 @@ async function initDb(retries = 5, delay = 2000) {
       );
     `);
     
-    console.log('Esquema auth, tabla auth.users y public.historial_accesos verificados.');
+    console.log('Esquema auth, tabla public.auth_users y public.historial_accesos verificados.');
 
     // Migraciones de columnas: agregar campos nuevos si no existen
     const migrations = [
       'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS ano_escolar VARCHAR(20)',
       'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS seccion VARCHAR(20)',
       'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS comentario_institucion TEXT',
-      'ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)',
-      'ALTER TABLE IF EXISTS auth.users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ',
+      'ALTER TABLE IF EXISTS public.auth_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)',
+      'ALTER TABLE IF EXISTS public.auth_users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ',
       'ALTER TABLE IF EXISTS public.usuarios ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT \'activo\'',
       'ALTER TABLE IF EXISTS public.horarios ADD COLUMN IF NOT EXISTS anio_escolar TEXT',
       'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS telefono_representante VARCHAR(30)'
@@ -145,7 +143,7 @@ async function initDb(retries = 5, delay = 2000) {
     // Sembrar Administrador Máster si no existe
     try {
       const masterEmail = 'adminmaster2026l.n.joaquinas@gmail.com';
-      const checkAdmin = await pool.query('SELECT id FROM auth.users WHERE email = $1', [masterEmail]);
+      const checkAdmin = await pool.query('SELECT id FROM public.auth_users WHERE email = $1', [masterEmail]);
       
       let userId;
       if (checkAdmin.rows.length === 0) {
@@ -154,12 +152,12 @@ async function initDb(retries = 5, delay = 2000) {
         const hash = crypto.createHash('sha256').update(initialPassword).digest('hex');
         
         const insertUser = await pool.query(
-          `INSERT INTO auth.users (email, encrypted_password, raw_user_meta_data) 
+          `INSERT INTO public.auth_users (email, encrypted_password, raw_user_meta_data) 
            VALUES ($1, $2, $3) RETURNING id`,
           [masterEmail, hash, JSON.stringify({ full_name: 'Administrador Máster', role: 'admin' })]
         );
         userId = insertUser.rows[0].id;
-        console.log('Administrador Máster creado en auth.users.');
+        console.log('Administrador Máster creado en public.auth_users.');
       } else {
         userId = checkAdmin.rows[0].id;
       }
@@ -543,7 +541,7 @@ const server = http.createServer(async (req, res) => {
       const hash = hashPassword(password);
 
       try {
-        const checkRes = await pool.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+        const checkRes = await pool.query('SELECT id FROM public.auth_users WHERE email = $1', [email]);
         if (checkRes.rows.length > 0) {
           res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: { user: null }, error: { message: 'El usuario ya existe' } }));
@@ -553,7 +551,7 @@ const server = http.createServer(async (req, res) => {
         const userMetadata = options?.data || {};
 
         const insertRes = await pool.query(
-          `INSERT INTO auth.users (email, encrypted_password, raw_user_meta_data) 
+          `INSERT INTO public.auth_users (email, encrypted_password, raw_user_meta_data) 
            VALUES ($1, $2, $3) RETURNING id, email, raw_user_meta_data, created_at`,
           [email, hash, JSON.stringify(userMetadata)]
         );
@@ -618,7 +616,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         const dbRes = await pool.query(
-          'SELECT id, email, encrypted_password, raw_user_meta_data, created_at FROM auth.users WHERE email = $1',
+          'SELECT id, email, encrypted_password, raw_user_meta_data, created_at FROM public.auth_users WHERE email = $1',
           [email]
         );
 
@@ -694,7 +692,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const dbRes = await pool.query(
-          'SELECT id FROM auth.users WHERE id = $1',
+          'SELECT id FROM public.auth_users WHERE id = $1',
           [userId]
         );
         const valid = dbRes.rows.length > 0;
@@ -717,7 +715,7 @@ const server = http.createServer(async (req, res) => {
       try {
         if (token) {
           const userCheck = await pool.query(
-            'SELECT id FROM auth.users WHERE reset_token = $1 AND reset_token_expires > NOW()',
+            'SELECT id FROM public.auth_users WHERE reset_token = $1 AND reset_token_expires > NOW()',
             [token]
           );
           if (userCheck.rows.length === 0) {
@@ -727,13 +725,13 @@ const server = http.createServer(async (req, res) => {
           }
           const targetUserId = userCheck.rows[0].id;
           await pool.query(
-            'UPDATE auth.users SET encrypted_password = $1, reset_token = NULL, reset_token_expires = NULL, updated_at = NOW() WHERE id = $2',
+            'UPDATE public.auth_users SET encrypted_password = $1, reset_token = NULL, reset_token_expires = NULL, updated_at = NOW() WHERE id = $2',
             [hash, targetUserId]
           );
           res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: { user: { id: targetUserId } }, error: null }));
         } else if (userId) {
-          await pool.query('UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2', [hash, userId]);
+          await pool.query('UPDATE public.auth_users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2', [hash, userId]);
           res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: { user: { id: userId } }, error: null }));
         } else {
@@ -754,7 +752,7 @@ const server = http.createServer(async (req, res) => {
       const { email, redirectTo } = await readJsonBody(req);
 
       try {
-        const checkRes = await pool.query('SELECT id, email, raw_user_meta_data FROM auth.users WHERE email = $1', [email]);
+        const checkRes = await pool.query('SELECT id, email, raw_user_meta_data FROM public.auth_users WHERE email = $1', [email]);
         if (checkRes.rows.length === 0) {
           res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: null, error: { message: 'El correo ingresado no coincide con ningún usuario' } }));
@@ -766,7 +764,7 @@ const server = http.createServer(async (req, res) => {
         const tokenExpires = new Date(Date.now() + 3600000);
 
         await pool.query(
-          'UPDATE auth.users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3',
+          'UPDATE public.auth_users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3',
           [token, tokenExpires, userRow.id]
         );
 
@@ -842,7 +840,7 @@ const server = http.createServer(async (req, res) => {
       const hash = hashPassword(password);
 
       try {
-        const checkRes = await pool.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+        const checkRes = await pool.query('SELECT id FROM public.auth_users WHERE email = $1', [email]);
         if (checkRes.rows.length > 0) {
           res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: { user: null }, error: { message: 'El usuario ya existe' } }));
@@ -850,7 +848,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         const insertRes = await pool.query(
-          `INSERT INTO auth.users (email, encrypted_password, raw_user_meta_data) 
+          `INSERT INTO public.auth_users (email, encrypted_password, raw_user_meta_data) 
            VALUES ($1, $2, $3) RETURNING id, email, raw_user_meta_data, created_at`,
           [email, hash, JSON.stringify(user_metadata || {})]
         );
@@ -877,7 +875,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/auth/admin/update-user' && req.method === 'POST') {
       const { id, password, user_metadata } = await readJsonBody(req);
       try {
-        const userCheck = await pool.query('SELECT email FROM auth.users WHERE id = $1', [id]);
+        const userCheck = await pool.query('SELECT email FROM public.auth_users WHERE id = $1', [id]);
         const isMaster = userCheck.rows.length > 0 && userCheck.rows[0].email === 'adminmaster2026l.n.joaquinas@gmail.com';
         
         if (isMaster && user_metadata) {
@@ -895,10 +893,10 @@ const server = http.createServer(async (req, res) => {
 
         if (password) {
           const hash = hashPassword(password);
-          await pool.query('UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2', [hash, id]);
+          await pool.query('UPDATE public.auth_users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2', [hash, id]);
         }
         if (user_metadata) {
-          await pool.query('UPDATE auth.users SET raw_user_meta_data = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(user_metadata), id]);
+          await pool.query('UPDATE public.auth_users SET raw_user_meta_data = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(user_metadata), id]);
         }
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ data: { user: { id } }, error: null }));
@@ -915,13 +913,13 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/auth/admin/delete-user' && req.method === 'POST') {
       const { id } = await readJsonBody(req);
       try {
-        const userCheck = await pool.query('SELECT email FROM auth.users WHERE id = $1', [id]);
+        const userCheck = await pool.query('SELECT email FROM public.auth_users WHERE id = $1', [id]);
         if (userCheck.rows.length > 0 && userCheck.rows[0].email === 'adminmaster2026l.n.joaquinas@gmail.com') {
           res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: null, error: { message: 'No está permitido eliminar la cuenta del Administrador Máster del sistema.' } }));
           return;
         }
-        await pool.query('DELETE FROM auth.users WHERE id = $1', [id]);
+        await pool.query('DELETE FROM public.auth_users WHERE id = $1', [id]);
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ data: { user: { id } }, error: null }));
       } catch (err) {
