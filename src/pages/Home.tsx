@@ -71,44 +71,52 @@ export const Home: React.FC = () => {
     <Layout>
       {/* Banner Principal Institucional */}
       <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-8 md:p-12 text-white mb-12 shadow-xl relative overflow-hidden border border-blue-600/20">
-        <div className="relative z-10 max-w-2xl">
-          <span className="px-3 py-1 bg-blue-500/30 text-blue-200 text-xs font-bold uppercase tracking-widest rounded-full mb-4 inline-block backdrop-blur-sm">
-            Portal Oficial 2026
-          </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight leading-none">
-            Bienvenido, {profile?.nombre_completo || 'Usuario'}
-          </h1>
-          <p className="text-xl text-blue-100/90 mb-8 font-light">
-            Aplicación Académica - Liceo Nacional Joaquina Sánchez
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              to="/news"
-              className="px-6 py-3 bg-white text-blue-800 rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5"
-            >
-              <Eye className="w-5 h-5 text-blue-600" /> Ver Todas las Noticias
-            </Link>
-            {userRole === 'parent' && (
-              <Link
-                to="/absences"
-                className="px-6 py-3 bg-blue-600/50 text-white rounded-xl font-bold hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg border border-blue-500/40 flex items-center gap-2 transform hover:-translate-y-0.5 backdrop-blur-sm"
-              >
-                <ClipboardX className="w-5 h-5 text-red-300" /> Reportar Inasistencia
-              </Link>
-            )}
-          </div>
-        </div>
-        <div className="absolute right-8 md:right-16 top-1/2 -translate-y-1/2 w-28 h-28 md:w-36 md:h-36 z-10 hidden sm:block">
-          <img 
-            src="/logo_liceo.jpg.jpeg" 
-            alt="Liceo Nacional Joaquina Sánchez" 
-            className="w-full h-full object-contain filter drop-shadow-xl"
-          />
-        </div>
+        {/* Decoración de fondo */}
         <div className="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full scale-150 transform translate-x-1/4">
             <path fill="#FFFFFF" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.4,-2.2C98.1,13.6,93.4,29.8,83.9,43.2C74.4,56.6,60.1,67.2,44.5,74.9C28.9,82.6,12,87.4,-4.3,95.1C-20.6,102.8,-36.3,113.4,-49.6,108.9C-62.9,104.4,-73.8,84.8,-81.9,65.8C-90,46.8,-95.3,28.4,-94.1,10.7C-92.9,-7,-85.2,-24.1,-75.7,-39.3C-66.2,-54.5,-54.9,-67.8,-41.4,-75.4C-27.9,-83,-12.2,-84.9,2.2,-88.7C16.6,-92.5,30.6,-83.6,44.7,-76.4Z" transform="translate(100 100)" />
           </svg>
+        </div>
+
+        {/* Contenido en flex: texto a la izquierda, logo a la derecha */}
+        <div className="relative z-10 flex items-center justify-between gap-6">
+          {/* Texto */}
+          <div className="flex-1 min-w-0">
+            <span className="px-3 py-1 bg-blue-500/30 text-blue-200 text-xs font-bold uppercase tracking-widest rounded-full mb-4 inline-block backdrop-blur-sm">
+              Portal Oficial 2026
+            </span>
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight break-words">
+              Bienvenido, {profile?.nombre_completo || 'Usuario'}
+            </h1>
+            <p className="text-lg md:text-xl text-blue-100/90 mb-8 font-light">
+              Aplicación Académica - Liceo Nacional Joaquina Sánchez
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to="/news"
+                className="px-6 py-3 bg-white text-blue-800 rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5"
+              >
+                <Eye className="w-5 h-5 text-blue-600" /> Ver Todas las Noticias
+              </Link>
+              {userRole === 'parent' && (
+                <Link
+                  to="/absences"
+                  className="px-6 py-3 bg-blue-600/50 text-white rounded-xl font-bold hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg border border-blue-500/40 flex items-center gap-2 transform hover:-translate-y-0.5 backdrop-blur-sm"
+                >
+                  <ClipboardX className="w-5 h-5 text-red-300" /> Reportar Inasistencia
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Logo: se muestra solo en pantallas medianas o mayores */}
+          <div className="hidden sm:flex shrink-0 w-28 h-28 md:w-36 md:h-36 items-center justify-center">
+            <img
+              src="/logo_liceo.jpg.jpeg"
+              alt="Liceo Nacional Joaquina Sánchez"
+              className="w-full h-full object-contain filter drop-shadow-xl"
+            />
+          </div>
         </div>
       </div>
 
