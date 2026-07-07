@@ -299,10 +299,13 @@ export const News: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <span className="block text-sm font-medium text-gray-700 mb-2">
               Imagen (Opcional)
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition cursor-pointer bg-gray-50">
+            </span>
+            <label
+              htmlFor="img-upload"
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition cursor-pointer bg-gray-50 flex flex-col items-center justify-center w-full"
+            >
               <input
                 type="file"
                 accept="image/*"
@@ -310,21 +313,16 @@ export const News: React.FC = () => {
                 className="hidden"
                 id="img-upload"
               />
-              <label
-                htmlFor="img-upload"
-                className="cursor-pointer flex flex-col items-center w-full h-full"
-              >
-                <div className="bg-white p-3 rounded-full shadow-sm mb-3">
-                  <ImageIcon className="w-8 h-8 text-orange-500" />
-                </div>
-                <span className="text-sm font-medium text-gray-700 mb-1">
-                  {formData.file ? formData.file.name : 'Añadir foto a la noticia'}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {formData.file ? `${(formData.file.size / (1024 * 1024)).toFixed(2)} MB` : 'PNG, JPG. Máximo 5MB'}
-                </span>
-              </label>
-            </div>
+              <div className="bg-white p-3 rounded-full shadow-sm mb-3">
+                <ImageIcon className="w-8 h-8 text-orange-500" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 mb-1">
+                {formData.file ? formData.file.name : 'Añadir foto a la noticia'}
+              </span>
+              <span className="text-xs text-gray-500">
+                {formData.file ? `${(formData.file.size / (1024 * 1024)).toFixed(2)} MB` : 'PNG, JPG. Máximo 5MB'}
+              </span>
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4">

@@ -482,7 +482,7 @@ export const Absences: React.FC = () => {
           <div className="absolute -top-8 -right-8 w-40 h-40 bg-white rounded-full" />
           <div className="absolute bottom-0 left-1/3 w-28 h-28 bg-white rounded-full" />
         </div>
-        <div className="relative flex items-center justify-between">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white/10 border border-white/20 backdrop-blur-sm p-3.5 rounded-2xl shadow-inner">
               <ClipboardX className="w-8 h-8 text-white" />
@@ -499,7 +499,7 @@ export const Absences: React.FC = () => {
           {userRole === 'parent' && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-white text-blue-900 px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-all shadow-lg font-bold text-sm"
+              className="flex items-center gap-2 bg-white text-blue-900 px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-all shadow-lg font-bold text-sm w-fit shrink-0"
             >
               <Plus className="w-4 h-4" />
               Reportar Inasistencia
