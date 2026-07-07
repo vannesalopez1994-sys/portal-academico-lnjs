@@ -1,7 +1,10 @@
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 // Listeners de cambios en estado de autenticación
 const authListeners = new Set<(event: string, session: any) => void>();
+
+// Flag para evitar doble disparo del evento inicial en onAuthStateChange
+let initialEventFired = false;
 
 // Obtener sesión local inicial desde localStorage
 let currentSession: any = null;
@@ -173,10 +176,15 @@ const auth = {
 
   onAuthStateChange(callback: (event: string, session: any) => void) {
     authListeners.add(callback);
-    // Disparar de forma asíncrona para imitar el comportamiento de Supabase
+    // Disparar de forma asíncrona el estado inicial solo UNA vez.
+    // Si signInWithPassword ya disparó el evento, saltamos el disparo inicial.
+    const sessionAtRegistration = currentSession;
     setTimeout(() => {
-      callback(currentSession ? 'SIGNED_IN' : 'SIGNED_OUT', currentSession);
-    }, 0);
+      if (!initialEventFired) {
+        initialEventFired = true;
+        callback(sessionAtRegistration ? 'SIGNED_IN' : 'SIGNED_OUT', sessionAtRegistration);
+      }
+    }, 50);
 
     return {
       data: {
@@ -188,6 +196,7 @@ const auth = {
       }
     };
   },
+
 
   async signInWithPassword({ email, password }: any) {
     if (isSigningIn) {
@@ -206,7 +215,8 @@ const auth = {
 
       currentSession = json.data.session;
       localStorage.setItem('local_session', JSON.stringify(currentSession));
-      
+      // Marcar que el evento ya fue disparado para evitar doble disparo
+      initialEventFired = true;
       authListeners.forEach(cb => cb('SIGNED_IN', currentSession));
 
       return { data: json.data, error: null };

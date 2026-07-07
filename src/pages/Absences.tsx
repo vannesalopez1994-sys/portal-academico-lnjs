@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase, Ausencias } from '../lib/supabase';
+import { supabase, Ausencias, BACKEND_URL } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import FileUpload from '../components/FileUpload';
 import PDFViewer from '../components/PDFViewer';
@@ -73,7 +73,7 @@ export const Absences: React.FC = () => {
       // 1. Obtener datos agrupados
       let reportData: any[] = [];
       try {
-        const res = await fetch('http://localhost:3001/api/ausencias/reporte-acumulado');
+        const res = await fetch(`${BACKEND_URL}/api/ausencias/reporte-acumulado`);
         const json = await res.json();
         if (json.data) {
           reportData = json.data;

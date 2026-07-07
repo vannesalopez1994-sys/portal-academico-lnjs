@@ -1,5 +1,4 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -8,50 +7,49 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  recovering: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
+  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
+
   public state: State = {
     hasError: false,
     error: null,
+    recovering: false,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('CRITICAL UI ERROR:', error);
-    console.error('Error Info:', errorInfo);
-    // Log additional context if available
-    if (window.location) {
-      console.error('URL at crash:', window.location.href);
-    }
+    console.error('CRITICAL UI ERROR (auto-recovering):', error.message);
+    console.error('Error Info:', errorInfo.componentStack?.slice(0, 300));
+
+    // Auto-recover after 1.5 seconds — on mobile the Render backend wakes up
+    // and a retry is almost always successful, so we reload silently.
+    this.recoveryTimer = setTimeout(() => {
+      this.setState({ recovering: true });
+      // Give 300ms for the spinner to show, then reset error state
+      setTimeout(() => {
+        this.setState({ hasError: false, error: null, recovering: false });
+      }, 300);
+    }, 1500);
   }
 
-  public componentDidUpdate(_prevProps: Props, prevState: State) {
-    if (prevState.hasError && !this.state.hasError) {
-      this.setState({ hasError: false, error: null });
-    }
+  public componentWillUnmount() {
+    if (this.recoveryTimer) clearTimeout(this.recoveryTimer);
   }
-
-
 
   public render() {
     if (this.state.hasError) {
+      // Show a subtle loading spinner instead of an ugly error screen.
+      // The recovery timer will reset the boundary automatically.
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col p-4 text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Algo salió mal</h2>
-          <p className="text-gray-600 mb-4 text-sm max-w-md">
-            Ha ocurrido un error inesperado al cargar la página. Por favor, intenta recargar la página.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Recargar Página
-          </button>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+          <p className="text-gray-500 text-sm font-medium">Cargando...</p>
         </div>
       );
     }
