@@ -154,13 +154,20 @@ export const EvaluationPlans: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200">
-            <GraduationCap className="text-white w-6 h-6" />
+        {/* Corporate Page Header */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-800 rounded-2xl p-6 mb-8 shadow-xl">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute -top-8 -right-8 w-40 h-40 bg-white rounded-full" />
+            <div className="absolute bottom-0 left-1/2 w-28 h-28 bg-white rounded-full" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight">Planes de Evaluación</h1>
-            <p className="text-gray-500 text-sm font-medium">Gestión y consulta de planificación académica flexible</p>
+          <div className="relative flex items-center gap-4">
+            <div className="bg-white/10 border border-white/20 backdrop-blur-sm p-3.5 rounded-2xl shadow-inner">
+              <GraduationCap className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight">Planes de Evaluación</h1>
+              <p className="text-blue-200/70 text-sm mt-0.5 font-medium">Gestión y consulta de planificación académica flexible</p>
+            </div>
           </div>
         </div>
 

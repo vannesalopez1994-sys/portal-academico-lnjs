@@ -187,22 +187,31 @@ export const News: React.FC = () => {
   return (
     <Layout bgClass="bg-blue-50/50">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Newspaper className="w-10 h-10 text-blue-900 stroke-[1.5]" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-950">Noticias y Avisos</h1>
-              <p className="text-gray-500 text-sm mt-0.5">Información relevante para la comunidad escolar</p>
-            </div>
+        {/* Corporate Page Header */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-800 rounded-2xl p-6 mb-8 shadow-xl">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute -top-8 -right-8 w-40 h-40 bg-white rounded-full" />
+            <div className="absolute bottom-0 left-1/3 w-28 h-28 bg-white rounded-full" />
           </div>
-          {canManage && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition font-semibold text-sm shadow-md shadow-blue-100"
-            >
-              Crear Noticia
-            </button>
-          )}
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 border border-white/20 backdrop-blur-sm p-3.5 rounded-2xl shadow-inner">
+                <Newspaper className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold text-white tracking-tight">Noticias y Avisos</h1>
+                <p className="text-blue-200/70 text-sm mt-0.5 font-medium">Información relevante para la comunidad escolar</p>
+              </div>
+            </div>
+            {canManage && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 bg-white text-blue-900 px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-all shadow-lg font-bold text-sm w-fit shrink-0"
+              >
+                Crear Noticia
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-6">

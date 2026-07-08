@@ -140,14 +140,20 @@ export const Backup: React.FC = () => {
 
   return (
     <Layout>
-      {/* ── Encabezado premium ── */}
-      <div className="flex items-center gap-3.5 mb-8">
-        <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 rounded-2xl w-14 h-14 flex items-center justify-center shadow-lg shadow-blue-900/20">
-          <ShieldCheck className="w-8 h-8 text-white" />
+      {/* Corporate Page Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-800 rounded-2xl p-6 mb-8 shadow-xl">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-8 -right-8 w-40 h-40 bg-white rounded-full" />
+          <div className="absolute bottom-0 left-1/3 w-28 h-28 bg-white rounded-full" />
         </div>
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Sistema de Respaldo</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Exporta e importa los datos del sistema de forma segura</p>
+        <div className="relative flex items-center gap-4">
+          <div className="bg-white/10 border border-white/20 backdrop-blur-sm p-3.5 rounded-2xl shadow-inner">
+            <ShieldCheck className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">Sistema de Respaldo</h1>
+            <p className="text-blue-200/70 text-sm mt-0.5 font-medium">Exporta e importa los datos del sistema de forma segura</p>
+          </div>
         </div>
       </div>
 
