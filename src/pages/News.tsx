@@ -221,11 +221,11 @@ export const News: React.FC = () => {
                 className="bg-white rounded-2xl shadow-lg border border-blue-100/50 overflow-hidden flex flex-col md:flex-row p-6 md:p-8 gap-6 md:gap-8 hover:border-blue-200 transition-all duration-300"
               >
                 {item.fotos.length > 0 ? (
-                  <div className="md:w-1/4 h-48 md:h-48 rounded-xl overflow-hidden relative">
+                  <div className="md:w-1/4 h-48 md:h-48 rounded-xl overflow-hidden relative bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                     <img
                       src={item.fotos[0].ruta_foto}
                       alt={item.titulo}
-                      className="w-full h-full object-cover transition duration-300 hover:scale-105"
+                      className="max-w-full max-h-full object-contain transition duration-300 hover:scale-105"
                     />
                   </div>
                 ) : (

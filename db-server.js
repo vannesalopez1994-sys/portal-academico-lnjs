@@ -260,7 +260,7 @@ const server = http.createServer(async (req, res) => {
     // SERVIR ARCHIVOS ESTÁTICOS (Mock de Supabase Storage)
     // ----------------------------------------------------
     if (pathname.startsWith('/storage/')) {
-      const relativePath = pathname.substring(9);
+      const relativePath = decodeURIComponent(pathname.substring(9));
       const filePath = path.join(process.cwd(), 'storage', relativePath);
 
       fs.readFile(filePath, (err, data) => {

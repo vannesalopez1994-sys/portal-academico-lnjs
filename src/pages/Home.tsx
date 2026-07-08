@@ -162,11 +162,11 @@ export const Home: React.FC = () => {
                   <div className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${index === 0 ? 'bg-gradient-to-b from-blue-500 to-indigo-600' : index === 1 ? 'bg-gradient-to-b from-emerald-400 to-teal-600' : 'bg-gradient-to-b from-amber-400 to-orange-500'}`} />
 
                   {item.fotos.length > 0 ? (
-                    <div className="sm:w-52 h-44 sm:h-auto overflow-hidden relative shrink-0 ml-1">
+                    <div className="sm:w-52 h-44 sm:h-auto overflow-hidden relative shrink-0 ml-1 bg-slate-50 border border-slate-100 flex items-center justify-center rounded-xl">
                       <img
                         src={item.fotos[0].ruta_foto}
                         alt={item.titulo}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        className="max-w-full max-h-full object-contain group-hover:scale-105 transition duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10 group-hover:to-black/5 transition-all duration-300" />
                     </div>
