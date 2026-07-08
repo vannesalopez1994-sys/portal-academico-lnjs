@@ -37,6 +37,14 @@ try {
   console.warn('Advertencia al cargar archivo .env:', err.message);
 }
 
+// Supabase Storage credentials (permanente, no se pierden al reiniciar)
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseStorageHeaders = {
+  'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+  'apikey': SUPABASE_SERVICE_KEY,
+};
+
 // Resolver hostname a IPv4 explícito ANTES de crear el Pool
 // Esto evita el error ENETUNREACH cuando Render intenta conectarse via IPv6 a Supabase
 const dbHostname = process.env.DATABASE_HOST || 'localhost';
@@ -257,26 +265,28 @@ const server = http.createServer(async (req, res) => {
 
   try {
     // ----------------------------------------------------
-    // SERVIR ARCHIVOS ESTÁTICOS (Mock de Supabase Storage)
+    // PROXY: Supabase Storage (archivos persistentes en la nube)
+    // Las URLs /storage/v1/object/public/... se redirigen a Supabase.
+    // Las URLs /storage/<bucket>/<path> también son soportadas.
     // ----------------------------------------------------
     if (pathname.startsWith('/storage/')) {
-      const relativePath = decodeURIComponent(pathname.substring(9));
-      const filePath = path.join(process.cwd(), 'storage', relativePath);
-
-      fs.readFile(filePath, (err, data) => {
-        if (err) {
-          res.writeHead(404, { 'Content-Type': 'text/plain', ...corsHeaders });
-          res.end('Archivo no encontrado');
-        } else {
-          let contentType = 'application/octet-stream';
-          if (filePath.endsWith('.pdf')) contentType = 'application/pdf';
-          else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
-          else if (filePath.endsWith('.png')) contentType = 'image/png';
-          
-          res.writeHead(200, { 'Content-Type': contentType, ...corsHeaders });
-          res.end(data);
+      const storagePath = decodeURIComponent(pathname.substring(9)); // quita '/storage/'
+      const supabaseFileUrl = `${SUPABASE_URL}/storage/v1/object/public/${storagePath}`;
+      try {
+        const upstreamRes = await fetch(supabaseFileUrl);
+        if (!upstreamRes.ok) {
+          res.writeHead(upstreamRes.status, { 'Content-Type': 'text/plain', ...corsHeaders });
+          res.end(`Archivo no encontrado en Supabase Storage: ${storagePath}`);
+          return;
         }
-      });
+        const contentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+        const buffer = Buffer.from(await upstreamRes.arrayBuffer());
+        res.writeHead(200, { 'Content-Type': contentType, 'Content-Length': buffer.length, ...corsHeaders });
+        res.end(buffer);
+      } catch (proxyErr) {
+        res.writeHead(500, { 'Content-Type': 'text/plain', ...corsHeaders });
+        res.end('Error al obtener archivo de Supabase Storage');
+      }
       return;
     }
 
@@ -948,6 +958,8 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/storage/upload' && req.method === 'POST') {
       const bucket = urlObj.searchParams.get('bucket');
       const filePath = urlObj.searchParams.get('path');
+      const contentType = req.headers['content-type'] || 'application/octet-stream';
+      const upsert = urlObj.searchParams.get('upsert') || 'false';
 
       if (!bucket || !filePath) {
         res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
@@ -955,25 +967,39 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const destDir = path.join(process.cwd(), 'storage', bucket, path.dirname(filePath));
-      fs.mkdirSync(destDir, { recursive: true });
+      // Leer el cuerpo de la solicitud
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const fileBuffer = Buffer.concat(chunks);
 
-      const destPath = path.join(destDir, path.basename(filePath));
-      const writeStream = fs.createWriteStream(destPath);
-
-      req.pipe(writeStream);
-
-      writeStream.on('finish', () => {
-        console.log(`Archivo guardado exitosamente en: ${destPath}`);
-        res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
-        res.end(JSON.stringify({ data: { path: filePath }, error: null }));
-      });
-
-      writeStream.on('error', (err) => {
-        console.error('Error al guardar el archivo:', err.message);
+      // Subir a Supabase Storage (almacenamiento permanente)
+      const supabaseUploadUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`;
+      try {
+        const upstreamRes = await fetch(supabaseUploadUrl, {
+          method: 'POST',
+          headers: {
+            ...supabaseStorageHeaders,
+            'Content-Type': contentType,
+            'x-upsert': upsert,
+          },
+          body: fileBuffer,
+        });
+        const json = await upstreamRes.json();
+        if (upstreamRes.ok) {
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+          console.log(`✅ Archivo subido a Supabase Storage: ${publicUrl}`);
+          res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
+          res.end(JSON.stringify({ data: { path: filePath, publicUrl }, error: null }));
+        } else {
+          console.error('Error al subir a Supabase Storage:', json);
+          res.writeHead(500, { 'Content-Type': 'application/json', ...corsHeaders });
+          res.end(JSON.stringify({ data: null, error: { message: json.message || 'Error al subir archivo' } }));
+        }
+      } catch (uploadErr) {
+        console.error('Error de red al subir a Supabase Storage:', uploadErr.message);
         res.writeHead(500, { 'Content-Type': 'application/json', ...corsHeaders });
-        res.end(JSON.stringify({ data: null, error: { message: err.message } }));
-      });
+        res.end(JSON.stringify({ data: null, error: { message: uploadErr.message } }));
+      }
       return;
     }
 
@@ -989,23 +1015,21 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const deleted = [];
-      const errors = [];
-
-      for (const filePath of filePaths) {
-        const diskPath = path.join(process.cwd(), 'storage', bucket, filePath);
-        try {
-          if (fs.existsSync(diskPath)) {
-            fs.unlinkSync(diskPath);
-            deleted.push(filePath);
-          }
-        } catch (err) {
-          errors.push({ path: filePath, error: err.message });
-        }
+      // Eliminar de Supabase Storage (almacenamiento permanente)
+      try {
+        const supabaseDeleteUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}`;
+        const delRes = await fetch(supabaseDeleteUrl, {
+          method: 'DELETE',
+          headers: { ...supabaseStorageHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prefixes: filePaths }),
+        });
+        const delJson = await delRes.json();
+        res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
+        res.end(JSON.stringify({ data: delJson, error: null }));
+      } catch (delErr) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...corsHeaders });
+        res.end(JSON.stringify({ data: null, error: { message: delErr.message } }));
       }
-
-      res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
-      res.end(JSON.stringify({ data: deleted, error: errors.length > 0 ? errors : null }));
       return;
     }
 
