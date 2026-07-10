@@ -45,7 +45,15 @@ import {
   ShieldCheck,
   KeyRound,
   UserCircle2,
-  BarChart2
+  BarChart2,
+  LogIn,
+  FileUp,
+  UserPlus,
+  UserMinus,
+  FileText,
+  Bell,
+  Clock3,
+  XCircle
 } from 'lucide-react';
 
 export const Statistics: React.FC = () => {
@@ -161,14 +169,16 @@ export const Statistics: React.FC = () => {
 
       setChartData(last6Months);
 
-      // --- CÁLCULO 4: Tabla de Flujo (últimas conexiones) ---
-      const mappedConnections = logs.slice(0, 15).map((log: any) => {
+      // --- CÁLCULO 4: Tabla de Actividad (últimas 20 acciones) ---
+      const mappedConnections = logs.slice(0, 20).map((log: any) => {
         const matchedUser = users.find((u: any) => u.correo === log.correo);
         return {
           id: log.id,
           correo: log.correo,
           fecha_acceso: log.fecha_acceso,
-          nombre_rol: matchedUser?.roles?.nombre_rol || 'Representante'
+          nombre_rol: matchedUser?.roles?.nombre_rol || 'Representante',
+          accion: log.accion || 'Inició sesión',
+          modulo: log.modulo || 'Sistema'
         };
       });
 
@@ -179,6 +189,34 @@ export const Statistics: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAccionBadge = (accion: string) => {
+    const a = accion?.toLowerCase() || '';
+    if (a.includes('inici') && a.includes('sesi')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700"><LogIn className="w-3 h-3" />{accion}</span>;
+    if (a.includes('report') || a.includes('inasistencia')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-orange-700"><CalendarCheck className="w-3 h-3" />{accion}</span>;
+    if (a.includes('subi') || a.includes('archivo')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700"><FileUp className="w-3 h-3" />{accion}</span>;
+    if (a.includes('public') || a.includes('noticia')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-50 text-violet-700"><Bell className="w-3 h-3" />{accion}</span>;
+    if (a.includes('cre') && a.includes('usuario')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700"><UserPlus className="w-3 h-3" />{accion}</span>;
+    if (a.includes('elimin') && a.includes('usuario')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700"><UserMinus className="w-3 h-3" />{accion}</span>;
+    if (a.includes('denegado')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600"><XCircle className="w-3 h-3" />{accion}</span>;
+    if (a.includes('actualiz') || a.includes('edit')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700"><FileText className="w-3 h-3" />{accion}</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-50 text-gray-600"><Clock3 className="w-3 h-3" />{accion}</span>;
+  };
+
+  const getModuloBadge = (modulo: string) => {
+    const m = modulo?.toLowerCase() || '';
+    const colors: Record<string, string> = {
+      'inasistencias': 'bg-orange-100 text-orange-800',
+      'noticias': 'bg-violet-100 text-violet-800',
+      'horarios': 'bg-blue-100 text-blue-800',
+      'planes de evaluación': 'bg-indigo-100 text-indigo-800',
+      'documentos': 'bg-teal-100 text-teal-800',
+      'usuarios': 'bg-rose-100 text-rose-800',
+      'sistema': 'bg-gray-100 text-gray-700',
+    };
+    const colorClass = colors[m] || 'bg-gray-100 text-gray-700';
+    return <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide ${colorClass}`}>{modulo}</span>;
   };
 
   const getRoleBadge = (roleName: string) => {
@@ -301,11 +339,11 @@ export const Statistics: React.FC = () => {
             </div>
           </div>
 
-          {/* Tabla de Flujo (Bottom) */}
+          {/* Tabla de Actividad del Sistema */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-8 py-6 bg-gray-50/50 border-b flex justify-between items-center">
               <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                <div className="bg-slate-700 p-1.5 rounded-lg"><MonitorCheck size={16} className="text-white" /></div> Últimas Conexiones Recientes
+                <div className="bg-slate-700 p-1.5 rounded-lg"><MonitorCheck size={16} className="text-white" /></div> Registro de Actividad del Sistema
               </h2>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Monitoreo en Tiempo Real
@@ -314,32 +352,40 @@ export const Statistics: React.FC = () => {
 
             {latestConnections.length === 0 ? (
               <div className="p-16 text-center">
-                <p className="text-gray-400 text-sm">No se registran visitas aún en el historial.</p>
+                <p className="text-gray-400 text-sm">No se registran acciones aún en el historial.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-white">
-                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Usuario (Correo)</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Rol</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Fecha</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-right">Hora</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Usuario</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Rol</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Acción</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Módulo</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Fecha</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-right">Hora</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {latestConnections.map((conn) => (
-                      <tr key={conn.id} className="hover:bg-gray-50/30 transition-colors">
-                        <td className="px-8 py-5">
+                      <tr key={conn.id} className="hover:bg-gray-50/40 transition-colors">
+                        <td className="px-6 py-4">
                           <p className="text-gray-900 font-bold text-sm">{conn.correo}</p>
                         </td>
-                        <td className="px-8 py-5 text-center flex justify-center">
+                        <td className="px-6 py-4">
                           {getRoleBadge(conn.nombre_rol)}
                         </td>
-                        <td className="px-8 py-5 text-center text-xs font-semibold text-gray-500">
+                        <td className="px-6 py-4">
+                          {getAccionBadge(conn.accion)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {getModuloBadge(conn.modulo)}
+                        </td>
+                        <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">
                           {new Date(conn.fecha_acceso).toLocaleDateString('es-ES')}
                         </td>
-                        <td className="px-8 py-5 text-right text-xs font-bold text-gray-700">
+                        <td className="px-6 py-4 text-right text-xs font-bold text-gray-700">
                           {new Date(conn.fecha_acceso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </td>
                       </tr>

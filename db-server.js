@@ -157,7 +157,9 @@ async function initDb(retries = 5, delay = 2000) {
       'ALTER TABLE IF EXISTS public.auth_users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ',
       'ALTER TABLE IF EXISTS public.usuarios ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT \'activo\'',
       'ALTER TABLE IF EXISTS public.horarios ADD COLUMN IF NOT EXISTS anio_escolar TEXT',
-      'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS telefono_representante VARCHAR(30)'
+      'ALTER TABLE IF EXISTS public.ausencias ADD COLUMN IF NOT EXISTS telefono_representante VARCHAR(30)',
+      'ALTER TABLE IF EXISTS public.historial_accesos ADD COLUMN IF NOT EXISTS accion VARCHAR(100)',
+      'ALTER TABLE IF EXISTS public.historial_accesos ADD COLUMN IF NOT EXISTS modulo VARCHAR(60)'
     ];
 
     for (const migration of migrations) {
@@ -247,6 +249,18 @@ function readJsonBody(req) {
 // Utilidad para hashear contraseñas
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// Utilidad para registrar actividad en el historial
+async function logActivity(usuarioId, correo, accion, modulo) {
+  try {
+    await pool.query(
+      'INSERT INTO public.historial_accesos (usuario_id, correo, accion, modulo) VALUES ($1, $2, $3, $4)',
+      [usuarioId || null, correo || '', accion, modulo]
+    );
+  } catch (logErr) {
+    console.error('Error al registrar actividad:', logErr.message);
+  }
 }
 
 // Servidor principal
@@ -512,6 +526,26 @@ const server = http.createServer(async (req, res) => {
           returnedData = returnedData.length > 0 ? returnedData[0] : null;
         }
 
+        // Registrar actividad automáticamente para acciones relevantes (no selects)
+        if (action !== 'select' && dbRes.rows.length > 0) {
+          const actorEmail = req.headers['x-user-email'] || '';
+          const actorId = req.headers['x-user-id'] || null;
+          const accionMap = {
+            insert: { ausencias: 'Reportó inasistencia', noticias: 'Publicó noticia', horarios: 'Subió horario', planes_evaluacion: 'Subió plan de evaluación', documentos: 'Subió documento' },
+            update: { ausencias: 'Actualizó inasistencia', noticias: 'Editó noticia', horarios: 'Actualizó horario', usuarios: 'Actualizó usuario' },
+            delete: { ausencias: 'Eliminó inasistencia', noticias: 'Eliminó noticia', horarios: 'Eliminó horario', documentos: 'Eliminó documento', usuarios: 'Eliminó usuario' }
+          };
+          const moduloMap = {
+            ausencias: 'Inasistencias', noticias: 'Noticias', horarios: 'Horarios',
+            planes_evaluacion: 'Planes de Evaluación', documentos: 'Documentos', usuarios: 'Usuarios'
+          };
+          const accionLabel = accionMap[action]?.[table];
+          const moduloLabel = moduloMap[table];
+          if (accionLabel && moduloLabel && actorEmail) {
+            logActivity(actorId, actorEmail, accionLabel, moduloLabel);
+          }
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ 
           data: returnedData, 
@@ -643,6 +677,7 @@ const server = http.createServer(async (req, res) => {
             data: { user: null, session: null },
             error: { message: 'Acceso denegado' }
           }));
+          await logActivity(null, email, 'Intento de acceso denegado', 'Sistema');
           return;
         }
 
@@ -685,14 +720,19 @@ const server = http.createServer(async (req, res) => {
 
         const userRow = dbRes.rows[0];
 
+        // Obtener nombre_completo para el log
+        let nombreRol = 'Usuario';
         try {
-          await pool.query(
-            'INSERT INTO public.historial_accesos (usuario_id, correo) VALUES ($1, $2)',
-            [userRow.id, userRow.email]
+          const rolRes = await pool.query(
+            `SELECT u.nombre_completo, r.nombre_rol FROM public.usuarios u
+             LEFT JOIN public.roles r ON u.id_rol = r.id_rol
+             WHERE u.id = $1`,
+            [userRow.id]
           );
-        } catch (logErr) {
-          console.error('Error al registrar historial de acceso:', logErr.message);
-        }
+          if (rolRes.rows.length > 0) nombreRol = rolRes.rows[0].nombre_rol || 'Usuario';
+        } catch (_) {}
+
+        await logActivity(userRow.id, userRow.email, 'Inició sesión', nombreRol);
 
         const user = {
           id: userRow.id,
@@ -890,6 +930,8 @@ const server = http.createServer(async (req, res) => {
           created_at: insertRes.rows[0].created_at
         };
 
+        await logActivity(newUser.id, newUser.email, 'Usuario creado por administrador', 'Usuarios');
+
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ data: { user: newUser }, error: null }));
       } catch (err) {
@@ -950,6 +992,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         await pool.query('DELETE FROM public.auth_users WHERE id = $1', [id]);
+        await logActivity(null, userCheck.rows[0]?.email || '', 'Usuario eliminado', 'Usuarios');
         res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ data: { user: { id } }, error: null }));
       } catch (err) {
@@ -994,6 +1037,17 @@ const server = http.createServer(async (req, res) => {
         const json = await upstreamRes.json();
         if (upstreamRes.ok) {
           const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+          // Determinar módulo por bucket
+          const moduloMap = {
+            'horarios': 'Horarios',
+            'planes-evaluacion': 'Planes de Evaluación',
+            'documentos': 'Documentos',
+            'noticias': 'Noticias'
+          };
+          const moduloNombre = moduloMap[bucket] || 'Archivo';
+          const uploaderEmail = req.headers['x-user-email'] || '';
+          const uploaderId = req.headers['x-user-id'] || null;
+          await logActivity(uploaderId, uploaderEmail, `Subió archivo: ${filePath.split('/').pop()}`, moduloNombre);
           console.log(`✅ Archivo subido a Supabase Storage: ${publicUrl}`);
           res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ data: { path: filePath, publicUrl }, error: null }));
