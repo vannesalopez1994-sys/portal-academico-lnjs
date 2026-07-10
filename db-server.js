@@ -656,11 +656,10 @@ const server = http.createServer(async (req, res) => {
         const attempt = loginAttempts.get(email) || { attempts: 0, lockUntil: 0 };
 
         if (attempt.lockUntil > now) {
-          const remainingMin = Math.ceil((attempt.lockUntil - now) / (60 * 1000));
           res.writeHead(429, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({ 
             data: { user: null, session: null }, 
-            error: { message: `Demasiados intentos fallidos. Tu cuenta está bloqueada. Inténtalo de nuevo en ${remainingMin} minuto(s).` } 
+            error: { message: 'Acceso denegado. Tu cuenta está bloqueada. Comunícate con coordinación.' } 
           }));
           return;
         }
@@ -675,7 +674,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({
             data: { user: null, session: null },
-            error: { message: 'Acceso denegado' }
+            error: { message: 'Acceso denegado. Tu cuenta está bloqueada. Comunícate con coordinación.' }
           }));
           await logActivity(null, email, 'Intento de acceso denegado', 'Sistema');
           return;
