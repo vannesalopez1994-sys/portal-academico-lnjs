@@ -641,7 +641,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({
             data: { user: null, session: null },
-            error: { message: 'Tu cuenta ha sido desactivada por la institución. Comunícate con coordinación.' }
+            error: { message: 'Acceso denegado' }
           }));
           return;
         }
