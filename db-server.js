@@ -653,22 +653,29 @@ const server = http.createServer(async (req, res) => {
 
         if (dbRes.rows.length === 0 || dbRes.rows[0].encrypted_password !== hash) {
           attempt.attempts += 1;
-          const remainingAttempts = 5 - attempt.attempts;
+          const remainingAttempts = 3 - attempt.attempts;
 
-          if (attempt.attempts >= 5) {
+          if (attempt.attempts >= 3) {
+            // Desactivar el usuario en la base de datos (excepto el Administrador Máster por seguridad)
+            if (email !== 'adminmaster2026l.n.joaquinas@gmail.com') {
+              await pool.query(
+                'UPDATE public.usuarios SET estado = $1 WHERE correo = $2',
+                ['inactivo', email]
+              );
+            }
             attempt.lockUntil = now + 15 * 60 * 1000;
             loginAttempts.set(email, attempt);
             res.writeHead(429, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: 'Tu cuenta ha sido bloqueada temporalmente por 15 minutos debido a 5 intentos fallidos de inicio de sesión.' } 
+              error: { message: 'Tu cuenta ha sido bloqueada y desactivada por seguridad al superar los 3 intentos fallidos de inicio de sesión. Comunícate con coordinación.' } 
             }));
           } else {
             loginAttempts.set(email, attempt);
             res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: `Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de bloquear la cuenta.` } 
+              error: { message: `Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de desactivar la cuenta.` } 
             }));
           }
           return;
