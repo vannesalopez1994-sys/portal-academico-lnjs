@@ -99,10 +99,24 @@ class QueryBuilder {
   // Permite await del objeto QueryBuilder directamente
   async then(onfulfilled?: (value: any) => any, _onrejected?: (reason: any) => any) {
     try {
+      // Obtener datos de sesión activa para enviar al backend
+      const sessionStr = localStorage.getItem('local_session');
+      let userEmail = '';
+      let userId = '';
+      try {
+        if (sessionStr) {
+          const session = JSON.parse(sessionStr);
+          userEmail = session?.user?.email || '';
+          userId = session?.user?.id || '';
+        }
+      } catch (_) {}
+
       const res = await fetch(`${BACKEND_URL}/api/query`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-user-email': userEmail,
+          'x-user-id': userId
         },
         body: JSON.stringify({
           table: this.table,
@@ -366,8 +380,24 @@ const storage = {
     return {
       async upload(filePath: string, file: File | Blob, _options?: any) {
         try {
+          // Obtener datos de sesión activa para el log
+          const sessionStr = localStorage.getItem('local_session');
+          let userEmail = '';
+          let userId = '';
+          try {
+            if (sessionStr) {
+              const session = JSON.parse(sessionStr);
+              userEmail = session?.user?.email || '';
+              userId = session?.user?.id || '';
+            }
+          } catch (_) {}
+
           const res = await fetch(`${BACKEND_URL}/api/storage/upload?bucket=${bucket}&path=${filePath}`, {
             method: 'POST',
+            headers: {
+              'x-user-email': userEmail,
+              'x-user-id': userId
+            },
             body: file
           });
           const json = await res.json();

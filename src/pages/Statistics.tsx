@@ -68,6 +68,10 @@ export const Statistics: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [latestConnections, setLatestConnections] = useState<any[]>([]);
 
+  // Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const POR_PAGINA = 10;
+
   useEffect(() => {
     fetchStatistics();
   }, [userRole]);
@@ -169,8 +173,8 @@ export const Statistics: React.FC = () => {
 
       setChartData(last6Months);
 
-      // --- CÁLCULO 4: Tabla de Actividad (últimas 20 acciones) ---
-      const mappedConnections = logs.slice(0, 20).map((log: any) => {
+      // --- CÁLCULO 4: Tabla de Actividad (todos los registros para paginar) ---
+      const mappedConnections = logs.map((log: any) => {
         const matchedUser = users.find((u: any) => u.correo === log.correo);
         return {
           id: log.id,
@@ -354,47 +358,82 @@ export const Statistics: React.FC = () => {
               <div className="p-16 text-center">
                 <p className="text-gray-400 text-sm">No se registran acciones aún en el historial.</p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-white">
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Usuario</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Rol</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Acción</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Módulo</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Fecha</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-right">Hora</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {latestConnections.map((conn) => (
-                      <tr key={conn.id} className="hover:bg-gray-50/40 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-gray-900 font-bold text-sm">{conn.correo}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          {getRoleBadge(conn.nombre_rol)}
-                        </td>
-                        <td className="px-6 py-4">
-                          {getAccionBadge(conn.accion)}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {getModuloBadge(conn.modulo)}
-                        </td>
-                        <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">
-                          {new Date(conn.fecha_acceso).toLocaleDateString('es-ES')}
-                        </td>
-                        <td className="px-6 py-4 text-right text-xs font-bold text-gray-700">
-                          {new Date(conn.fecha_acceso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            ) : (() => {
+              const totalPaginas = Math.ceil(latestConnections.length / POR_PAGINA);
+              const inicio = (paginaActual - 1) * POR_PAGINA;
+              const fin = inicio + POR_PAGINA;
+              const registrosPagina = latestConnections.slice(inicio, fin);
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-white">
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Usuario</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Rol</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Acción</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Módulo</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-center">Fecha</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 text-right">Hora</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {registrosPagina.map((conn) => (
+                          <tr key={conn.id} className="hover:bg-gray-50/40 transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="text-gray-900 font-bold text-sm">{conn.correo}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              {getRoleBadge(conn.nombre_rol)}
+                            </td>
+                            <td className="px-6 py-4">
+                              {getAccionBadge(conn.accion)}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              {getModuloBadge(conn.modulo)}
+                            </td>
+                            <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">
+                              {new Date(conn.fecha_acceso).toLocaleDateString('es-ES')}
+                            </td>
+                            <td className="px-6 py-4 text-right text-xs font-bold text-gray-700">
+                              {new Date(conn.fecha_acceso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Controles de Paginación */}
+                  <div className="px-8 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p className="text-xs text-gray-500 font-medium">
+                      Mostrando <span className="font-black text-gray-700">{inicio + 1}–{Math.min(fin, latestConnections.length)}</span> de <span className="font-black text-gray-700">{latestConnections.length}</span> registros
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                        disabled={paginaActual === 1}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        ← Anterior
+                      </button>
+                      <span className="px-4 py-2 rounded-xl text-xs font-black bg-slate-700 text-white shadow-sm">
+                        Página {paginaActual} de {totalPaginas}
+                      </span>
+                      <button
+                        onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                        disabled={paginaActual === totalPaginas}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
+
 
         </div>
       </InlineErrorBoundary>
