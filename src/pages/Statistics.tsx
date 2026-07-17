@@ -34,7 +34,13 @@ import {
   Tooltip,
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  BarChart,
+  Bar,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import {
   LineChart,
@@ -53,7 +59,9 @@ import {
   FileText,
   Bell,
   Clock3,
-  XCircle
+  XCircle,
+  Users,
+  Calendar
 } from 'lucide-react';
 
 export const Statistics: React.FC = () => {
@@ -71,6 +79,12 @@ export const Statistics: React.FC = () => {
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const POR_PAGINA = 10;
+
+  // Nuevas Estadísticas Comparativas
+  const [absencesMonthlyData, setAbsencesMonthlyData] = useState<any[]>([]);
+  const [absencesAnnualData, setAbsencesAnnualData] = useState<any[]>([]);
+  const [usersRolesData, setUsersRolesData] = useState<any[]>([]);
+  const [vistaComparativa, setVistaComparativa] = useState<'mensual' | 'anual'>('mensual');
 
   useEffect(() => {
     fetchStatistics();
@@ -98,8 +112,16 @@ export const Statistics: React.FC = () => {
 
       if (logsErr) throw logsErr;
 
+      // 3. Obtener inasistencias para comparar (1ro a 5to año)
+      const { data: absencesData, error: absencesErr } = await supabase
+        .from('ausencias')
+        .select('ano_escolar, fecha_desde');
+
+      if (absencesErr) throw absencesErr;
+
       const logs = logsData || [];
       const users = usersData || [];
+      const absences = absencesData || [];
 
       // --- CÁLCULO 1: Total Visitas del Mes ---
       const now = new Date();
@@ -173,7 +195,88 @@ export const Statistics: React.FC = () => {
 
       setChartData(last6Months);
 
-      // --- CÁLCULO 4: Tabla de Actividad (todos los registros para paginar) ---
+      // --- CÁLCULO 4: Distribución de Usuarios por Rol ---
+      const rolesCount: Record<string, number> = {
+        'Administrador': 0,
+        'Secretaría': 0,
+        'Representante': 0
+      };
+      users.forEach((u: any) => {
+        const roleName = u.roles?.nombre_rol || 'Representante';
+        const normRole = roleName.toLowerCase();
+        if (normRole.includes('admin')) {
+          rolesCount['Administrador']++;
+        } else if (normRole.includes('secret')) {
+          rolesCount['Secretaría']++;
+        } else {
+          rolesCount['Representante']++;
+        }
+      });
+      const pieData = Object.keys(rolesCount).map(role => ({
+        name: role,
+        value: rolesCount[role]
+      }));
+      setUsersRolesData(pieData);
+
+      // --- CÁLCULO 5: Inasistencias de 1ro a 5to Año ---
+      const normalizeYear = (yr: string) => {
+        if (!yr) return 'Otros';
+        const y = yr.toLowerCase();
+        if (y.includes('1er') || y.includes('1o') || y.includes('primero')) return '1er Año';
+        if (y.includes('2do') || y.includes('2o') || y.includes('segundo')) return '2do Año';
+        if (y.includes('3er') || y.includes('3o') || y.includes('tercero')) return '3er Año';
+        if (y.includes('4to') || y.includes('4o') || y.includes('cuarto')) return '4to Año';
+        if (y.includes('5to') || y.includes('5o') || y.includes('quinto')) return '5to Año';
+        return 'Otros';
+      };
+
+      // 5.1. Vista Mensual (últimos 6 meses)
+      const last6MonthsAbsences = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - (5 - i));
+        return {
+          mes: `${mesesNombres[d.getMonth()]} ${d.getFullYear()}`,
+          monthNum: d.getMonth(),
+          yearNum: d.getFullYear(),
+          '1er Año': 0,
+          '2do Año': 0,
+          '3er Año': 0,
+          '4to Año': 0,
+          '5to Año': 0
+        };
+      });
+
+      absences.forEach((abs: any) => {
+        const absDate = new Date(abs.fecha_desde);
+        const absMonth = absDate.getMonth();
+        const absYear = absDate.getFullYear();
+        const yearCategory = normalizeYear(abs.ano_escolar);
+        
+        const matched = last6MonthsAbsences.find((m: any) => m.monthNum === absMonth && m.yearNum === absYear);
+        if (matched && yearCategory !== 'Otros') {
+          matched[yearCategory]++;
+        }
+      });
+      setAbsencesMonthlyData(last6MonthsAbsences);
+
+      // 5.2. Vista Anual
+      const annualAbsencesData = [
+        { name: '1er Año', inasistencias: 0 },
+        { name: '2do Año', inasistencias: 0 },
+        { name: '3er Año', inasistencias: 0 },
+        { name: '4to Año', inasistencias: 0 },
+        { name: '5to Año', inasistencias: 0 }
+      ];
+      absences.forEach((abs: any) => {
+        const yearCategory = normalizeYear(abs.ano_escolar);
+        const matched = annualAbsencesData.find(item => item.name === yearCategory);
+        if (matched) {
+          matched.inasistencias++;
+        }
+      });
+      setAbsencesAnnualData(annualAbsencesData);
+
+      // --- CÁLCULO 6: Tabla de Actividad (todos los registros para paginar) ---
       const mappedConnections = logs.map((log: any) => {
         const matchedUser = users.find((u: any) => u.correo === log.correo);
         return {
@@ -305,7 +408,137 @@ export const Statistics: React.FC = () => {
             </div>
           </div>
 
-          {/* Gráfico Profesional (Centro) */}
+          {/* Fila de Gráficos Comparativos Avanzados */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            
+            {/* Gráfico 1: Inasistencias de 1ro a 5to Año */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 lg:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-black text-gray-800 flex items-center gap-2">
+                    <div className="bg-orange-600 p-1.5 rounded-lg"><Calendar size={16} className="text-white" /></div> Comparativa de Inasistencias por Año Escolar
+                  </h3>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Comparativa de ausencias de alumnos de 1ro a 5to año</p>
+                </div>
+                {/* Selector de Vista */}
+                <div className="flex bg-gray-100 p-1 rounded-xl w-fit self-start sm:self-center">
+                  <button
+                    onClick={() => setVistaComparativa('mensual')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${vistaComparativa === 'mensual' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Mensual
+                  </button>
+                  <button
+                    onClick={() => setVistaComparativa('anual')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${vistaComparativa === 'anual' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Anual
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-72 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  {vistaComparativa === 'mensual' ? (
+                    <BarChart data={absencesMonthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '16px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)'
+                        }}
+                      />
+                      <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: 11, fontWeight: 600, color: '#64748b' }} />
+                      <Bar dataKey="1er Año" fill="#3b82f6" radius={[4, 4, 0, 0]} name="1ro" />
+                      <Bar dataKey="2do Año" fill="#10b981" radius={[4, 4, 0, 0]} name="2do" />
+                      <Bar dataKey="3er Año" fill="#f59e0b" radius={[4, 4, 0, 0]} name="3ro" />
+                      <Bar dataKey="4to Año" fill="#f97316" radius={[4, 4, 0, 0]} name="4to" />
+                      <Bar dataKey="5to Año" fill="#ef4444" radius={[4, 4, 0, 0]} name="5to" />
+                    </BarChart>
+                  ) : (
+                    <BarChart data={absencesAnnualData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '16px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)'
+                        }}
+                      />
+                      <Bar dataKey="inasistencias" fill="#6366f1" radius={[6, 6, 0, 0]} name="Inasistencias Acumuladas" />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Gráfico 2: Distribución de Usuarios por Rol */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-black text-gray-800 flex items-center gap-2">
+                  <div className="bg-purple-600 p-1.5 rounded-lg"><Users size={16} className="text-white" /></div> Distribución de Roles
+                </h3>
+                <p className="text-xs text-gray-400 font-medium mt-1">Porcentaje de usuarios registrados por rol</p>
+              </div>
+
+              <div className="h-48 w-full relative flex items-center justify-center min-w-0 mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={usersRolesData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {usersRolesData.map((_, index) => {
+                        const COLORS = ['#6366f1', '#3b82f6', '#14b8a6'];
+                        return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                      })}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: 'none',
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Total</span>
+                  <span className="text-2xl font-black text-gray-800 mt-1">
+                    {usersRolesData.reduce((acc, curr) => acc + curr.value, 0)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-gray-50 text-center">
+                {usersRolesData.map((item, idx) => {
+                  const COLORS = ['bg-indigo-500', 'bg-blue-500', 'bg-teal-500'];
+                  return (
+                    <div key={item.name} className="flex flex-col items-center">
+                      <div className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${COLORS[idx % COLORS.length]}`} />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{item.name}</span>
+                      </div>
+                      <span className="text-sm font-black text-gray-800 mt-1">{item.value}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Gráfico Profesional (Centro) - Tráfico Mensual */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-10">
             <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
               <div className="bg-blue-600 p-1.5 rounded-lg"><BarChart2 size={16} className="text-white" /></div> Tráfico Mensual de Representantes
