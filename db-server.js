@@ -719,6 +719,32 @@ const server = http.createServer(async (req, res) => {
 
         const userRow = dbRes.rows[0];
 
+        // Autocorrección/Sincronización de ID entre public.usuarios y public.auth_users
+        try {
+          const profileCheck = await pool.query(
+            'SELECT id, nombre_completo FROM public.usuarios WHERE correo = $1',
+            [email]
+          );
+          if (profileCheck.rows.length > 0) {
+            const profile = profileCheck.rows[0];
+            if (profile.id !== userRow.id) {
+              console.log(`[Auth Sync] ID mismatch for ${email}. Sincronizando...`);
+              try {
+                // Intentamos actualizar la tabla public.usuarios primero
+                await pool.query('UPDATE public.usuarios SET id = $1 WHERE correo = $2', [userRow.id, email]);
+                console.log(`[Auth Sync] public.usuarios actualizado con éxito a ${userRow.id}`);
+              } catch (errSync) {
+                // Si falla por dependencias de clave foránea, actualizamos public.auth_users
+                await pool.query('UPDATE public.auth_users SET id = $1 WHERE email = $2', [profile.id, email]);
+                userRow.id = profile.id;
+                console.log(`[Auth Sync] public.auth_users actualizado con éxito a ${profile.id}`);
+              }
+            }
+          }
+        } catch (syncErr) {
+          console.error('[Auth Sync] Error de sincronización:', syncErr.message);
+        }
+
         // Obtener nombre_completo para el log
         let nombreRol = 'Usuario';
         try {
