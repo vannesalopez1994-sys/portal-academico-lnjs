@@ -25,9 +25,12 @@ export const Absences: React.FC = () => {
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
 
-  // Grouped and filter states for Admin/Secretary
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('list');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState<string | null>(null);
+  
+  // Estados para organizar la vista agrupada por año y sección
+  const [expandedYear, setExpandedYear] = useState<string | null>(null);
+  const [activeSections, setActiveSections] = useState<Record<string, string>>({});
 
   const [newAbsence, setNewAbsence] = useState({
     nombre_alumno_descripcion: '',
@@ -434,6 +437,108 @@ export const Absences: React.FC = () => {
     })).sort((a, b) => b.count - a.count);
   }, [absences]);
 
+  // Agrupación jerárquica por Año y Sección para la nueva vista estructurada
+  const groupedByYearAndSection = React.useMemo(() => {
+    const hierarchy: Record<string, Record<string, typeof studentGroups>> = {};
+    const yearOrder = ['1er Año', '2do Año', '3er Año', '4to Año', '5to Año'];
+
+    // Inicializar para mantener el orden
+    yearOrder.forEach(yr => {
+      hierarchy[yr] = {};
+    });
+
+    studentGroups.forEach(student => {
+      const yr = student.ano || 'Otro';
+      const sec = student.seccion || 'Sin Sección';
+
+      if (!hierarchy[yr]) {
+        hierarchy[yr] = {};
+      }
+      if (!hierarchy[yr][sec]) {
+        hierarchy[yr][sec] = [];
+      }
+      hierarchy[yr][sec].push(student);
+    });
+
+    const result: Array<{
+      year: string;
+      totalStudents: number;
+      sections: Array<{ sectionName: string; students: typeof studentGroups }>;
+    }> = [];
+
+    // Agregar años ordenados
+    yearOrder.forEach(yr => {
+      if (hierarchy[yr] && Object.keys(hierarchy[yr]).length > 0) {
+        const sectionsArr: Array<{ sectionName: string; students: typeof studentGroups }> = [];
+        let totalStudents = 0;
+
+        // Ordenar secciones alfabéticamente
+        const sortedSecNames = Object.keys(hierarchy[yr]).sort();
+        sortedSecNames.forEach(secName => {
+          const students = hierarchy[yr][secName].sort((a, b) => a.name.localeCompare(b.name));
+          totalStudents += students.length;
+          sectionsArr.push({
+            sectionName,
+            students
+          });
+        });
+
+        result.push({
+          year: yr,
+          totalStudents,
+          sections: sectionsArr
+        });
+      }
+    });
+
+    // Agregar otros años no contemplados
+    Object.keys(hierarchy).forEach(yr => {
+      if (!yearOrder.includes(yr) && Object.keys(hierarchy[yr]).length > 0) {
+        const sectionsArr: Array<{ sectionName: string; students: typeof studentGroups }> = [];
+        let totalStudents = 0;
+
+        const sortedSecNames = Object.keys(hierarchy[yr]).sort();
+        sortedSecNames.forEach(secName => {
+          const students = hierarchy[yr][secName].sort((a, b) => a.name.localeCompare(b.name));
+          totalStudents += students.length;
+          sectionsArr.push({
+            sectionName,
+            students
+          });
+        });
+
+        result.push({
+          year: yr,
+          totalStudents,
+          sections: sectionsArr
+        });
+      }
+    });
+
+    return result;
+  }, [studentGroups]);
+
+  // Efecto para abrir automáticamente el primer año y la primera sección que contengan datos
+  useEffect(() => {
+    if (groupedByYearAndSection.length > 0) {
+      if (!expandedYear || !groupedByYearAndSection.some(g => g.year === expandedYear)) {
+        setExpandedYear(groupedByYearAndSection[0].year);
+      }
+
+      setActiveSections(prev => {
+        const updated = { ...prev };
+        let changed = false;
+        groupedByYearAndSection.forEach(g => {
+          if (g.sections.length > 0 && !updated[g.year]) {
+            updated[g.year] = g.sections[0].sectionName;
+            changed = true;
+          }
+        });
+        return changed ? updated : prev;
+      });
+    }
+  }, [groupedByYearAndSection, expandedYear]);
+
   const displayedAbsences = React.useMemo(() => {
     if (selectedStudentFilter) {
       return absences.filter(abs => abs.nombre_alumno_descripcion.trim() === selectedStudentFilter);
@@ -554,45 +659,114 @@ export const Absences: React.FC = () => {
       )}
 
       {viewMode === 'grouped' ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {studentGroups.length === 0 ? (
-              <div className="col-span-full bg-white rounded-2xl p-16 text-center border border-gray-100">
+            studentGroups.length === 0 ? (
+              <div className="bg-white rounded-2xl p-16 text-center border border-gray-100">
                 <BookMarked className="w-10 h-10 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-gray-900">No hay inasistencias registradas</h3>
               </div>
             ) : (
-              studentGroups.map(student => (
-                <div key={student.name} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full uppercase tracking-widest">
-                        {student.ano} - {student.seccion}
-                      </span>
-                      <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full">
-                        {student.count} {student.count === 1 ? 'reposo' : 'reposos'}
-                      </span>
+              <div className="space-y-4">
+                {groupedByYearAndSection.map((yearGroup) => {
+                  const isExpanded = expandedYear === yearGroup.year;
+                  return (
+                    <div key={yearGroup.year} className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden transition-all duration-300">
+                      {/* Cabecera del año escolar */}
+                      <button
+                        onClick={() => setExpandedYear(isExpanded ? null : yearGroup.year)}
+                        className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-[#0a1628] to-[#122644] text-white hover:from-[#11233d] hover:to-[#1a3359] transition-all text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">🎓</span>
+                          <div>
+                            <h3 className="font-extrabold text-base tracking-wide">{yearGroup.year}</h3>
+                            <p className="text-xs text-blue-200/70 font-semibold">
+                              {yearGroup.totalStudents} {yearGroup.totalStudents === 1 ? 'estudiante con inasistencias' : 'estudiantes con inasistencias'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2.5 py-1 rounded-full border border-white/10">
+                            {yearGroup.sections.length} {yearGroup.sections.length === 1 ? 'sección' : 'secciones'}
+                          </span>
+                          <span className={`transform transition-transform duration-300 text-xs text-blue-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                            ▼
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Contenido expandible */}
+                      {isExpanded && (
+                        <div className="p-6 bg-slate-50/40 border-t border-gray-100 space-y-6">
+                          {/* Selector de Sección (Pestañas) */}
+                          <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-4">
+                            {yearGroup.sections.map((sec) => {
+                              const isActive = activeSections[yearGroup.year] === sec.sectionName;
+                              return (
+                                <button
+                                  key={sec.sectionName}
+                                  onClick={() => setActiveSections(prev => ({ ...prev, [yearGroup.year]: sec.sectionName }))}
+                                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all shadow-sm ${
+                                    isActive
+                                      ? 'bg-blue-600 text-white shadow-blue-100 scale-105'
+                                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/80'
+                                  }`}
+                                >
+                                  {sec.sectionName} ({sec.students.length})
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Cuadrícula de alumnos filtrados por sección */}
+                          {(() => {
+                            const currentSection = yearGroup.sections.find(s => s.sectionName === activeSections[yearGroup.year]);
+                            if (!currentSection) return null;
+
+                            return (
+                              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {currentSection.students.map((student) => (
+                                  <div
+                                    key={student.name}
+                                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all flex flex-col justify-between"
+                                  >
+                                    <div>
+                                      <div className="flex items-center justify-between mb-4">
+                                        <span className="text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full uppercase tracking-widest">
+                                          {student.ano} - {student.seccion}
+                                        </span>
+                                        <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full">
+                                          {student.count} {student.count === 1 ? 'reposo' : 'reposos'}
+                                        </span>
+                                      </div>
+                                      <h3 className="text-base font-black text-gray-900 mb-2 truncate" title={student.name}>
+                                        {student.name}
+                                      </h3>
+                                      <p className="text-xs text-gray-400 font-medium mb-4">
+                                        Última inasistencia el {new Date(student.absences[0].created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedStudentFilter(student.name);
+                                        setViewMode('list');
+                                      }}
+                                      className="w-full py-2.5 px-4 bg-gradient-to-r from-[#0a1628] to-blue-800 text-white font-bold text-xs rounded-xl hover:opacity-95 transition-all text-center tracking-wider uppercase"
+                                    >
+                                      Ver Expediente Completo
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
-                    <h3 className="text-base font-black text-gray-900 mb-2 truncate" title={student.name}>
-                      {student.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 font-medium mb-4">
-                      Última inasistencia reportada el {new Date(student.absences[0].created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedStudentFilter(student.name);
-                      setViewMode('list');
-                    }}
-                    className="w-full py-2.5 px-4 bg-gradient-to-r from-[#0a1628] to-blue-800 text-white font-bold text-xs rounded-xl hover:opacity-95 transition-all text-center tracking-wider uppercase"
-                  >
-                    Ver Expediente Completo
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        ) : displayedAbsences.length === 0 ? (
+                  );
+                })}
+              </div>
+            )
+          ) : displayedAbsences.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
             <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center mx-auto mb-5">
               <BookMarked className="w-10 h-10 text-gray-300" />
