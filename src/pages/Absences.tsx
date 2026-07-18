@@ -478,7 +478,7 @@ export const Absences: React.FC = () => {
           const students = hierarchy[yr][secName].sort((a, b) => a.name.localeCompare(b.name));
           totalStudents += students.length;
           sectionsArr.push({
-            sectionName,
+            sectionName: secName,
             students
           });
         });
@@ -502,7 +502,7 @@ export const Absences: React.FC = () => {
           const students = hierarchy[yr][secName].sort((a, b) => a.name.localeCompare(b.name));
           totalStudents += students.length;
           sectionsArr.push({
-            sectionName,
+            sectionName: secName,
             students
           });
         });

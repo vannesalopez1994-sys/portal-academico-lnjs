@@ -15,8 +15,6 @@ export const EvaluationPlans: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Materias desde la Base de Datos
-  const [materias, setMaterias] = useState<any[]>([]);
 
   // Filtros de búsqueda
   const [filterAno, setFilterAno] = useState('');
@@ -46,7 +44,7 @@ export const EvaluationPlans: React.FC = () => {
       if (materiasRes.error) throw materiasRes.error;
 
       setPlans(plansRes.data || []);
-      setMaterias(materiasRes.data || []);
+      // materiasRes ya no necesita guardarse en estado, uniqueMaterias se deriva de plans
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
