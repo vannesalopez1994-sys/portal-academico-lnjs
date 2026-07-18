@@ -7,70 +7,55 @@ interface FieldHelpProps {
   hint: string;
   /** Ejemplo concreto a mostrar */
   example?: string;
-  /** Posición preferida en escritorio: 'right' (lado derecho) o 'bottom' (abajo) */
+  /**
+   * Mantenido por compatibilidad con código existente.
+   * Ya no afecta el posicionamiento (siempre se muestra inline debajo).
+   */
   position?: 'right' | 'bottom';
 }
 
 /**
- * FieldHelp – Contenedor (wrapper) que envuelve un input y muestra un globo
- * de ayuda tipo burbuja emergente cuando el campo recibe focus o hover.
- * Cuenta con un diseño adaptativo que en móviles siempre se muestra abajo.
+ * FieldHelp – Contenedor que envuelve un input y muestra una ayuda inline
+ * animada justo debajo del campo cuando éste recibe el foco.
+ *
+ * Ventajas respecto al tooltip flotante anterior:
+ *  - No tapa campos inferiores (es parte del flujo del documento).
+ *  - No se queda "pegado" en móvil (eliminamos el hover que no funciona en touch).
+ *  - Desaparece automáticamente cuando el usuario pasa al siguiente campo.
  */
-export const FieldHelp: React.FC<FieldHelpProps> = ({ children, hint, example, position = 'right' }) => {
+export const FieldHelp: React.FC<FieldHelpProps> = ({ children, hint, example }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const show = isFocused || isHovered;
 
   return (
-    <div 
-      className="relative w-full"
+    <div
+      className="w-full"
       onFocusCapture={() => setIsFocused(true)}
       onBlurCapture={() => setIsFocused(false)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Campo original (input, select o textarea) */}
       {children}
-      
-      {show && (
-        <div 
-          className={`
-            absolute z-[99] w-64 pointer-events-none
-            bg-[#eef2ff] border border-blue-200 rounded-2xl p-3.5 shadow-xl
-            text-slate-800 text-xs font-sans leading-relaxed
-            animate-in fade-in slide-in-from-top-1 duration-200
-            ${position === 'bottom' 
-              ? 'top-full left-0 mt-2.5' 
-              : 'md:left-full md:top-1/2 md:-translate-y-1/2 md:ml-3.5 md:right-auto md:bottom-auto top-full left-0 mt-2.5'
-            }
-          `}
-        >
-          {/* Triángulo/Flecha apuntadora */}
-          <div 
-            className={`
-              absolute w-2.5 h-2.5 bg-[#eef2ff] border-blue-200 rotate-45
-              ${position === 'bottom' 
-                ? '-top-[6px] left-6 border-t border-l' 
-                : 'md:-left-[6px] md:top-1/2 md:-translate-y-1/2 md:border-b md:border-l md:border-t-0 md:border-r-0 -top-[6px] left-6 border-t border-l'
-              }
-            `}
-          />
-          
-          {/* Contenido */}
-          <p className="font-semibold text-slate-700">{hint}</p>
-          
+
+      {/* Ayuda inline — aparece con animación debajo del campo al hacer foco */}
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-in-out ${
+          isFocused
+            ? 'max-h-32 opacity-100 mt-2 mb-1'
+            : 'max-h-0 opacity-0 mt-0 mb-0'
+        }`}
+      >
+        <div className="bg-blue-50/90 border border-blue-100 rounded-xl px-3 py-2.5 shadow-sm">
+          <p className="text-xs font-semibold text-slate-700 leading-relaxed">{hint}</p>
+
           {example && (
-            <div className="mt-2 bg-white/70 border border-blue-100 rounded-xl px-2.5 py-1.5 shadow-sm">
-              <span className="text-[9px] uppercase tracking-wider text-blue-600 font-bold block mb-0.5">
+            <div className="mt-1.5 bg-white/80 border border-blue-100 rounded-lg px-2.5 py-1.5">
+              <span className="text-[9px] uppercase tracking-wider text-blue-500 font-bold block mb-0.5">
                 Ejemplo:
               </span>
-              <p className="text-xs text-blue-900 font-mono leading-tight">
-                {example}
-              </p>
+              <p className="text-xs text-blue-900 font-mono leading-tight">{example}</p>
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
