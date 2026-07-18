@@ -156,7 +156,7 @@ export const Home: React.FC = () => {
               news.map((item, index) => (
                 <Link
                   key={item.id}
-                  to="/noticias"
+                  to="/news"
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-100 transition-all duration-300 flex flex-col sm:flex-row group relative cursor-pointer no-underline block"
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
