@@ -5,6 +5,7 @@ import { FileUp, CalendarCheck2, CheckCircle, Trash2, Download, AlertCircle, Loa
 import toast from 'react-hot-toast';
 import { supabase, Horarios } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { FieldHelp } from '../components/FieldHelp';
 
 export const Schedules: React.FC = () => {
   const { userRole } = useAuth();
@@ -181,70 +182,88 @@ export const Schedules: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                     <LayoutGrid size={14} className="text-gray-400" /> Año Escolar *
                   </label>
-                  <select
-                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                    value={anoEscolar}
-                    onChange={(e) => setAnoEscolar(e.target.value)}
-                    required
+                  <FieldHelp
+                    hint="Selecciona el año escolar al que corresponde este horario."
+                    example="4to Año"
+                    position="bottom"
                   >
-                    <option value="">Seleccione año...</option>
-                    <option value="1er Año">1er Año</option>
-                    <option value="2do Año">2do Año</option>
-                    <option value="3er Año">3er Año</option>
-                    <option value="4to Año">4to Año</option>
-                    <option value="5to Año">5to Año</option>
-                  </select>
+                    <select
+                      className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
+                      value={anoEscolar}
+                      onChange={(e) => setAnoEscolar(e.target.value)}
+                      required
+                    >
+                      <option value="">Seleccione año...</option>
+                      <option value="1er Año">1er Año</option>
+                      <option value="2do Año">2do Año</option>
+                      <option value="3er Año">3er Año</option>
+                      <option value="4to Año">4to Año</option>
+                      <option value="5to Año">5to Año</option>
+                    </select>
+                  </FieldHelp>
                 </div>
 
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                     <TableProperties size={14} className="text-gray-400" /> Sección *
                   </label>
-                  <select
-                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                    value={seccion}
-                    onChange={(e) => setSeccion(e.target.value)}
-                    required
+                  <FieldHelp
+                    hint="Selecciona la sección del aula a la que pertenece este horario."
+                    example="Sección B"
+                    position="bottom"
                   >
-                    <option value="">Seleccione sección...</option>
-                    {SECCIONES.map(s => (
-                      <option key={s} value={s}>Sección {s}</option>
-                    ))}
-                  </select>
+                    <select
+                      className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
+                      value={seccion}
+                      onChange={(e) => setSeccion(e.target.value)}
+                      required
+                    >
+                      <option value="">Seleccione sección...</option>
+                      {SECCIONES.map(s => (
+                        <option key={s} value={s}>Sección {s}</option>
+                      ))}
+                    </select>
+                  </FieldHelp>
                 </div>
 
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                     <FileUp size={14} className="text-gray-400" /> Cargar PDF *
                   </label>
-                  <div className="relative">
-                    <input
-                      id="file-upload"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => {
-                        const selectedFile = e.target.files?.[0] || null;
-                        if (selectedFile) {
-                          if (selectedFile.type !== 'application/pdf') {
-                            toast.error('Solo se permiten archivos PDF');
-                            return;
+                  <FieldHelp
+                    hint="Adjunta el horario oficial del aula en formato PDF. Máximo 10 MB."
+                    example="horario_4to_B_2025.pdf"
+                    position="bottom"
+                  >
+                    <div className="relative">
+                      <input
+                        id="file-upload"
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => {
+                          const selectedFile = e.target.files?.[0] || null;
+                          if (selectedFile) {
+                            if (selectedFile.type !== 'application/pdf') {
+                              toast.error('Solo se permiten archivos PDF');
+                              return;
+                            }
+                            if (selectedFile.size > 10 * 1024 * 1024) {
+                              toast.error('El archivo no debe superar los 10MB');
+                              return;
+                            }
                           }
-                          if (selectedFile.size > 10 * 1024 * 1024) {
-                            toast.error('El archivo no debe superar los 10MB');
-                            return;
-                          }
-                        }
-                        setFile(selectedFile);
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      required
-                    />
-                    <div className={`border-2 border-dashed rounded-xl p-3 flex items-center justify-center transition-all ${file ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
-                      <span className="text-xs text-gray-400 truncate font-medium">
-                        {file ? file.name : "Subir archivo del Horario"}
-                      </span>
+                          setFile(selectedFile);
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        required
+                      />
+                      <div className={`border-2 border-dashed rounded-xl p-3 flex items-center justify-center transition-all ${file ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
+                        <span className="text-xs text-gray-400 truncate font-medium">
+                          {file ? file.name : "Subir archivo del Horario"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </FieldHelp>
                 </div>
               </div>
 

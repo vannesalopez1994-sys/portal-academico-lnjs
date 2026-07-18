@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Users2, Search, UserPlus, ShieldCheck, AtSign, Trash2, Pencil, KeyRound, UserCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import { FormModal } from '../components/FormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FieldHelp } from '../components/FieldHelp';
 
 export const Users: React.FC = () => {
   const { profile, userRole } = useAuth();
@@ -435,49 +436,73 @@ export const Users: React.FC = () => {
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-              <input
-                type="text"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={newUser.fullName}
-                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-                placeholder="Ej. Juan Pérez"
-              />
+              <FieldHelp
+                hint="Ingresa el nombre y apellido completo del usuario tal como se registrará en el sistema."
+                example="Ana Rodríguez"
+                position="bottom"
+              >
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.fullName}
+                  onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                  placeholder="Ej. Juan Pérez"
+                />
+              </FieldHelp>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-              <input
-                type="email"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                placeholder="juan@ejemplo.com"
-              />
+              <FieldHelp
+                hint="Correo válido que usará el usuario para iniciar sesión. Debe ser único en el sistema."
+                example="ana.rodriguez@gmail.com"
+                position="bottom"
+              >
+                <input
+                  type="email"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="juan@ejemplo.com"
+                />
+              </FieldHelp>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-              <input
-                type="password"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                placeholder="Mínimo 8 car., mayúscula, número y especial"
-              />
+              <FieldHelp
+                hint="Mínimo 8 caracteres, una mayúscula, un número y un carácter especial (!@#$)."
+                example="MiClave@2025"
+                position="bottom"
+              >
+                <input
+                  type="password"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Mínimo 8 car., mayúscula, número y especial"
+                />
+              </FieldHelp>
               <p className="text-xs text-gray-400 mt-1">Ej: <span className="font-mono font-semibold">MiClave@2024</span></p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={newUser.role}
-                onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              <FieldHelp
+                hint="Define los permisos del usuario. Representante: solo consulta. Secretaría: gestiona expedientes. Administrador: acceso total."
+                example="Representante"
+                position="bottom"
               >
-                <option value="parent">Representante</option>
-                <option value="secretary">Secretaría</option>
-                <option value="admin">Administrador</option>
-              </select>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                >
+                  <option value="parent">Representante</option>
+                  <option value="secretary">Secretaría</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </FieldHelp>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
@@ -511,40 +536,58 @@ export const Users: React.FC = () => {
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-              <input
-                type="text"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-                value={editForm.fullName}
-                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                placeholder="Ej. Juan Pérez"
-                disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
-              />
+              <FieldHelp
+                hint="Modifica el nombre y apellido que el usuario verá en su perfil dentro del sistema."
+                example="Carlos Pérez"
+                position="bottom"
+              >
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                  placeholder="Ej. Juan Pérez"
+                  disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
+                />
+              </FieldHelp>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-                value={editForm.role}
-                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
+              <FieldHelp
+                hint="Cambia el nivel de acceso del usuario. El cambio toma efecto en su próximo inicio de sesión."
+                example="Secretaría"
+                position="bottom"
               >
-                <option value="parent">Representante</option>
-                <option value="secretary">Secretaría</option>
-                <option value="admin">Administrador</option>
-              </select>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
+                >
+                  <option value="parent">Representante</option>
+                  <option value="secretary">Secretaría</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </FieldHelp>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado de la Cuenta</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-                value={editForm.estado}
-                onChange={(e) => setEditForm({ ...editForm, estado: e.target.value })}
-                disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
+              <FieldHelp
+                hint="Activo: el usuario puede iniciar sesión. Inactivo: el acceso queda bloqueado temporalmente."
+                example="Activo"
+                position="bottom"
               >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                  value={editForm.estado}
+                  onChange={(e) => setEditForm({ ...editForm, estado: e.target.value })}
+                  disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
+                >
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </FieldHelp>
             </div>
 
             <div className="pt-2">

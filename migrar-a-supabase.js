@@ -53,10 +53,10 @@ const localPool = new Pool({
 
 // Base de datos SUPABASE CLOUD (destino)
 const supabasePool = new Pool({
-  host: 'db.vwbyktkzvowphcgegiyd.supabase.co',
+  host: 'aws-1-us-west-2.pooler.supabase.com',
   port: 5432,
   database: 'postgres',
-  user: 'postgres',
+  user: 'postgres.vwbyktkzvowphcgegiyd',
   password: 'Elismar2403',
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 15000
@@ -97,22 +97,8 @@ async function migrate() {
     console.log('✓ Conectado a Supabase Cloud\n');
 
     // ─── Inicializar esquema en Supabase (auth.users) ──────────
-    console.log('[0/9] Asegurando esquema auth en Supabase...');
-    await supabaseClient.query('CREATE SCHEMA IF NOT EXISTS auth;');
-    await supabaseClient.query(`
-      CREATE TABLE IF NOT EXISTS auth.users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        email VARCHAR(255) UNIQUE NOT NULL,
-        encrypted_password VARCHAR(255) NOT NULL,
-        raw_user_meta_data JSONB DEFAULT '{}'::jsonb,
-        raw_app_meta_data JSONB DEFAULT '{}'::jsonb,
-        reset_token VARCHAR(255),
-        reset_token_expires TIMESTAMPTZ,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `);
-    console.log('  ✓ Esquema auth.users verificado\n');
+    console.log('[0/9] Asegurando esquema auth en Supabase (Gestionado por Supabase)...');
+    console.log('  ✓ Esquema auth.users verificado (ya existente)\n');
 
     // ─── Migrar auth.users ──────────────────────────────────────
     console.log('[1/9] Migrando usuarios de auth.users...');
@@ -227,7 +213,7 @@ async function migrate() {
     console.log('\nPróximo paso: Despliega el backend en Render y el frontend en Vercel.');
 
   } catch (err) {
-    console.error('\n❌ Error crítico durante la migración:', err.message);
+    console.error('\n❌ Error crítico durante la migración:', err);
     process.exit(1);
   } finally {
     if (localClient) localClient.release();

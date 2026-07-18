@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogIn, Eye, EyeOff, AlertCircle, Mail, Lock, User } from 'lucide-react';
 import { Captcha } from '../Captcha';
+import { FieldHelp } from '../FieldHelp';
 
 interface LoginProps {
   onForgotPassword: () => void;
@@ -143,19 +144,25 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                   <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block pl-1">
                     Nombre Completo
                   </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <User className="w-4 h-4 stroke-[2]" />
+                  <FieldHelp
+                    hint="Escribe tu nombre y apellido completo tal como aparece en tu documento de identidad."
+                    example="María Andreína Pérez"
+                    position="right"
+                  >
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <User className="w-4 h-4 stroke-[2]" />
+                      </div>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                        placeholder="Ej. María Pérez"
+                        required
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                      placeholder="Ej. María Pérez"
-                      required
-                    />
-                  </div>
+                  </FieldHelp>
                   <input type="hidden" value="parent" />
                 </div>
               )}
@@ -164,19 +171,25 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                 <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block pl-1">
                   Correo Electrónico
                 </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="w-4 h-4 stroke-[2]" />
+                <FieldHelp
+                  hint="Ingresa el correo con el que fue registrada tu cuenta. Debe tener el formato usuario@dominio.com."
+                  example="representante@gmail.com"
+                  position="right"
+                >
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Mail className="w-4 h-4 stroke-[2]" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                      placeholder="tu@email.com"
+                      required
+                    />
                   </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </div>
+                </FieldHelp>
                 <p className="text-[10px] text-blue-200/60 mt-1 pl-1 select-none">
                   Formato sugerido: ejemplo@correo.com
                 </p>
@@ -184,7 +197,7 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
 
               <div className="space-y-1">
                 <div className="flex justify-between items-center pl-1">
-                  <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                  <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
                     Contraseña
                   </label>
                   {!isRegistering && (
@@ -197,26 +210,32 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                     </button>
                   )}
                 </div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4 stroke-[2]" />
+                <FieldHelp
+                  hint="Ingresa tu contraseña secreta. Si te registraste recientemente, usa la misma que creaste. Distingue mayúsculas y minúsculas."
+                  example="MiClave@2025"
+                  position="right"
+                >
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4 stroke-[2]" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                </FieldHelp>
                 <p className="text-[10px] text-blue-200/60 mt-1 pl-1 select-none">
                   Recomendación: Mínimo 8 caracteres con mayúsculas y números.
                 </p>
@@ -239,7 +258,8 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                     </p>
                     <ul className="text-[10px] text-slate-400 space-y-0.5 pl-1">
                       {PASSWORD_RULES.map((rule) => (
-                        <li key={rule.label} className={`flex items-center gap-1 transition-colors ${rule.test(password) ? 'text-green-400' : 'text-slate-500'}`}>\n                          <span>{rule.test(password) ? '✓' : '○'}</span> {rule.label}
+                        <li key={rule.label} className={`flex items-center gap-1 transition-colors ${rule.test(password) ? 'text-green-400' : 'text-slate-500'}`}>
+                          <span>{rule.test(password) ? '✓' : '○'}</span> {rule.label}
                         </li>
                       ))}
                     </ul>
@@ -252,9 +272,15 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                   <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block pl-1">
                     Código de Verificación
                   </label>
-                  <div className="bg-slate-900/60 border border-white/5 rounded-xl py-2 px-3 shadow-inner">
-                    <Captcha onValidate={setCaptchaValid} />
-                  </div>
+                  <FieldHelp
+                    hint="Escribe los caracteres que aparecen en la imagen. Este paso confirma que eres una persona real y no un robot."
+                    example="Si ves 'A3kP7', escribe exactamente: A3kP7"
+                    position="right"
+                  >
+                    <div className="bg-slate-900/60 border border-white/5 rounded-xl py-2 px-3 shadow-inner">
+                      <Captcha onValidate={setCaptchaValid} />
+                    </div>
+                  </FieldHelp>
                 </div>
               )}
 

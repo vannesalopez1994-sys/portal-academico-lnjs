@@ -5,6 +5,7 @@ import { FileUp, CheckCircle, Trash2, Download, AlertCircle, Loader2, Graduation
 import toast from 'react-hot-toast';
 import { supabase, PlanesEvaluacion } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { FieldHelp } from '../components/FieldHelp';
 
 export const EvaluationPlans: React.FC = () => {
   const { userRole } = useAuth();
@@ -189,68 +190,92 @@ export const EvaluationPlans: React.FC = () => {
                 <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                   <GraduationCap size={16} className="text-gray-400" /> Año Escolar *
                 </label>
-                <select
-                  className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                  value={anoEscolar}
-                  onChange={(e) => setAnoEscolar(e.target.value)}
+                <FieldHelp
+                  hint="Selecciona el año al que corresponde este plan de evaluación."
+                  example="2do Año"
+                  position="bottom"
                 >
-                  <option value="">Seleccione año...</option>
-                  <option value="1er Año">1er Año</option>
-                  <option value="2do Año">2do Año</option>
-                  <option value="3er Año">3er Año</option>
-                  <option value="4to Año">4to Año</option>
-                  <option value="5to Año">5to Año</option>
-                </select>
+                  <select
+                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
+                    value={anoEscolar}
+                    onChange={(e) => setAnoEscolar(e.target.value)}
+                  >
+                    <option value="">Seleccione año...</option>
+                    <option value="1er Año">1er Año</option>
+                    <option value="2do Año">2do Año</option>
+                    <option value="3er Año">3er Año</option>
+                    <option value="4to Año">4to Año</option>
+                    <option value="5to Año">5to Año</option>
+                  </select>
+                </FieldHelp>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                   <Layers size={16} className="text-gray-400" /> Sección *
                 </label>
-                <select
-                  className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                  value={seccion}
-                  onChange={(e) => setSeccion(e.target.value)}
+                <FieldHelp
+                  hint="Selecciona la sección del aula para la que aplica este plan de evaluación."
+                  example="Sección A"
+                  position="bottom"
                 >
-                  <option value="">Seleccione sección...</option>
-                  {SECCIONES.map(s => (
-                    <option key={s} value={s}>Sección {s}</option>
-                  ))}
-                </select>
+                  <select
+                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
+                    value={seccion}
+                    onChange={(e) => setSeccion(e.target.value)}
+                  >
+                    <option value="">Seleccione sección...</option>
+                    {SECCIONES.map(s => (
+                      <option key={s} value={s}>Sección {s}</option>
+                    ))}
+                  </select>
+                </FieldHelp>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                   <GraduationCap size={16} className="text-gray-400" /> Materia *
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Matemáticas"
-                  className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                  value={nombreMateria}
-                  onChange={(e) => setNombreMateria(e.target.value)}
-                  required
-                />
+                <FieldHelp
+                  hint="Escribe el nombre de la asignatura tal como aparece en el programa escolar."
+                  example="Matemáticas"
+                  position="bottom"
+                >
+                  <input
+                    type="text"
+                    placeholder="Ej: Matemáticas"
+                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                    value={nombreMateria}
+                    onChange={(e) => setNombreMateria(e.target.value)}
+                    required
+                  />
+                </FieldHelp>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-gray-700 flex items-center gap-1">
                   <FileUp size={16} className="text-gray-400" /> Cargar PDF
                 </label>
-                <div className="relative">
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  <div className={`border-2 border-dashed rounded-xl p-3 flex items-center justify-center transition-all ${file ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
-                    <span className="text-xs text-gray-400 truncate font-medium">
-                      {file ? file.name : "Subir archivo del Plan de Evaluación"}
-                    </span>
+                <FieldHelp
+                  hint="Sube el Plan de Evaluación del lapso en formato PDF. Máximo 10 MB."
+                  example="plan_eval_2do_A_mate.pdf"
+                  position="bottom"
+                >
+                  <div className="relative">
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className={`border-2 border-dashed rounded-xl p-3 flex items-center justify-center transition-all ${file ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
+                      <span className="text-xs text-gray-400 truncate font-medium">
+                        {file ? file.name : "Subir archivo del Plan de Evaluación"}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </FieldHelp>
               </div>
             </div>
 

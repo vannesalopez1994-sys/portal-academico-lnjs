@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import FileUpload from '../components/FileUpload';
 import PDFViewer from '../components/PDFViewer';
 import { Layout } from '../components/Layout';
+import { FieldHelp } from '../components/FieldHelp';
 import { Plus, CheckCircle, XCircle, Clock, Eye, Upload, Trash2, CalendarRange, FileWarning, ShieldAlert, ClipboardX, BookMarked } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -755,66 +756,96 @@ export const Absences: React.FC = () => {
             <div className="grid gap-6">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Nombre del Estudiante</label>
-                <input
-                  type="text"
-                  value={newAbsence.nombre_alumno_descripcion}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, nombre_alumno_descripcion: e.target.value })}
-                  placeholder="Ej. Juan Pérez - 3er Año C"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                />
+                <FieldHelp
+                  hint="Escribe el nombre completo del estudiante tal como aparece en la lista de clase."
+                  example="María González"
+                  position="bottom"
+                >
+                  <input
+                    type="text"
+                    value={newAbsence.nombre_alumno_descripcion}
+                    onChange={(e) => setNewAbsence({ ...newAbsence, nombre_alumno_descripcion: e.target.value })}
+                    placeholder="Ej. Juan Pérez - 3er Año C"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                  />
+                </FieldHelp>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Año Escolar *</label>
-                  <select
-                    value={newAbsence.ano_escolar}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, ano_escolar: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                    required
+                  <FieldHelp
+                    hint="Selecciona el año que cursa el estudiante. Va desde 1er Año hasta 5to Año."
+                    example="3er Año"
+                    position="bottom"
                   >
-                    <option value="">Seleccione el año...</option>
-                    <option value="1er Año">1er Año</option>
-                    <option value="2do Año">2do Año</option>
-                    <option value="3er Año">3er Año</option>
-                    <option value="4to Año">4to Año</option>
-                    <option value="5to Año">5to Año</option>
-                  </select>
+                    <select
+                      value={newAbsence.ano_escolar}
+                      onChange={(e) => setNewAbsence({ ...newAbsence, ano_escolar: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                      required
+                    >
+                      <option value="">Seleccione el año...</option>
+                      <option value="1er Año">1er Año</option>
+                      <option value="2do Año">2do Año</option>
+                      <option value="3er Año">3er Año</option>
+                      <option value="4to Año">4to Año</option>
+                      <option value="5to Año">5to Año</option>
+                    </select>
+                  </FieldHelp>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Sección *</label>
-                  <select
-                    value={newAbsence.seccion}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, seccion: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                    required
+                  <FieldHelp
+                    hint="Selecciona la sección a la que pertenece el estudiante (letra del aula)."
+                    example="Sección C"
+                    position="bottom"
                   >
-                    <option value="">Seleccione la sección...</option>
-                    {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letra => (
-                      <option key={letra} value={`Sección ${letra}`}>Sección {letra}</option>
-                    ))}
-                  </select>
+                    <select
+                      value={newAbsence.seccion}
+                      onChange={(e) => setNewAbsence({ ...newAbsence, seccion: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                      required
+                    >
+                      <option value="">Seleccione la sección...</option>
+                      {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letra => (
+                        <option key={letra} value={`Sección ${letra}`}>Sección {letra}</option>
+                      ))}
+                    </select>
+                  </FieldHelp>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Inicio</label>
-                  <input
-                    type="date"
-                    value={newAbsence.fecha_desde}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, fecha_desde: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
-                  />
+                  <FieldHelp
+                    hint="Selecciona el primer día de la inasistencia del estudiante."
+                    example="2025-03-10 (lunes)"
+                    position="bottom"
+                  >
+                    <input
+                      type="date"
+                      value={newAbsence.fecha_desde}
+                      onChange={(e) => setNewAbsence({ ...newAbsence, fecha_desde: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
+                    />
+                  </FieldHelp>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Fin</label>
-                  <input
-                    type="date"
-                    value={newAbsence.fecha_hasta}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, fecha_hasta: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
-                  />
+                  <FieldHelp
+                    hint="Selecciona el último día de la inasistencia. Si fue solo un día, usa la misma fecha de inicio."
+                    example="2025-03-12 (miércoles)"
+                    position="bottom"
+                  >
+                    <input
+                      type="date"
+                      value={newAbsence.fecha_hasta}
+                      onChange={(e) => setNewAbsence({ ...newAbsence, fecha_hasta: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
+                    />
+                  </FieldHelp>
                 </div>
               </div>
 
@@ -822,35 +853,53 @@ export const Absences: React.FC = () => {
                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                   📞 Teléfono del Representante *
                 </label>
-                <input
-                  type="tel"
-                  value={newAbsence.telefono_representante}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, telefono_representante: e.target.value })}
-                  placeholder="Ej. 0412-1234567"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                  required
-                />
+                <FieldHelp
+                  hint="Número de contacto del representante. Incluye el prefijo de la operadora (04xx)."
+                  example="0412-7654321"
+                  position="bottom"
+                >
+                  <input
+                    type="tel"
+                    value={newAbsence.telefono_representante}
+                    onChange={(e) => setNewAbsence({ ...newAbsence, telefono_representante: e.target.value })}
+                    placeholder="Ej. 0412-1234567"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                    required
+                  />
+                </FieldHelp>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Motivo / Descripción</label>
-                <textarea
-                  value={newAbsence.motivo}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, motivo: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
-                  placeholder="Explique el motivo de la inasistencia..."
-                />
+                <FieldHelp
+                  hint="Describe brevemente la causa de la inasistencia. Este texto acompaña el justificativo PDF."
+                  example="Reposo médico por gripe, indicado por el Dr. Ramírez."
+                  position="bottom"
+                >
+                  <textarea
+                    value={newAbsence.motivo}
+                    onChange={(e) => setNewAbsence({ ...newAbsence, motivo: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
+                    placeholder="Explique el motivo de la inasistencia..."
+                  />
+                </FieldHelp>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Justificativo (PDF)</label>
-                <FileUpload
-                  onFileSelect={setSelectedFile}
-                  maxSize={5 * 1024 * 1024}
-                  accept=".pdf"
-                  disabled={uploading}
-                />
+                <FieldHelp
+                  hint="Adjunta el reposo médico u otro documento oficial en formato PDF. Máximo 5 MB."
+                  example="reposo_medico_maria.pdf"
+                  position="bottom"
+                >
+                  <FileUpload
+                    onFileSelect={setSelectedFile}
+                    maxSize={5 * 1024 * 1024}
+                    accept=".pdf"
+                    disabled={uploading}
+                  />
+                </FieldHelp>
               </div>
             </div>
 

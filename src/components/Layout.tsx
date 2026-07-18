@@ -393,6 +393,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                       <p className="text-xs">Haz clic en <strong>Enviar Justificativo</strong>. La secretaría revisará y actualizará el estado de la solicitud.</p>
                     </li>
                   </ul>
+
+                  {/* Ejemplos de campos */}
+                  <div className="mt-2 border-t border-white/10 pt-4">
+                    <p className="text-[10px] uppercase tracking-widest text-blue-300 font-black mb-3 flex items-center gap-1.5">
+                      <span>💡</span> Ejemplo de cómo llenar el formulario
+                    </p>
+                    <div className="space-y-2">
+                      {[
+                        { campo: 'Nombre del Estudiante', valor: 'María González' },
+                        { campo: 'Año Escolar', valor: '3er Año' },
+                        { campo: 'Sección', valor: 'Sección C' },
+                        { campo: 'Teléfono', valor: '0412-7654321' },
+                        { campo: 'Fecha Inicio', valor: '10/03/2025' },
+                        { campo: 'Fecha Fin', valor: '12/03/2025' },
+                        { campo: 'Motivo', valor: 'Reposo médico por gripe (Dr. Ramírez).' },
+                        { campo: 'PDF adjunto', valor: 'reposo_medico_maria.pdf' },
+                      ].map(item => (
+                        <div key={item.campo} className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-1.5">
+                          <span className="text-[10px] text-slate-400 font-medium w-36 flex-shrink-0">{item.campo}:</span>
+                          <span className="text-[11px] text-white font-mono">{item.valor}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -423,6 +447,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                       <p className="text-xs"><strong>Generar Reporte PDF:</strong> Haz clic en el botón azul <strong>Descargar Reporte PDF</strong> en la sección Inasistencias. El sistema procesará una consulta agrupada y descargará un informe oficial en formato Carta con membrete del plantel, logo y total acumulado por alumno.</p>
                     </li>
                   </ul>
+
+                  {/* Referencia rápida de módulos */}
+                  <div className="mt-2 border-t border-white/10 pt-4">
+                    <p className="text-[10px] uppercase tracking-widest text-indigo-300 font-black mb-3 flex items-center gap-1.5">
+                      <span>📋</span> Referencia rápida de módulos
+                    </p>
+                    <div className="space-y-2">
+                      {[
+                        { modulo: '👥 Usuarios', accion: 'Registrar usuario: Nombre, Correo, Contraseña (≥8 car.), Rol.' },
+                        { modulo: '📰 Noticias', accion: 'Crear aviso: Título breve + Contenido completo + Imagen opcional (PNG/JPG ≤5MB).' },
+                        { modulo: '📅 Horarios', accion: 'Subir horario por sección: selecciona Año, Sección y adjunta PDF (≤10MB).' },
+                        { modulo: '📝 Plan Eval.', accion: 'Subir plan de evaluación: selecciona Año, Sección, Materia y adjunta PDF.' },
+                        { modulo: '📊 Estadísticas', accion: 'Visualiza inasistencias comparativas por año/mes y distribución de roles.' },
+                      ].map(item => (
+                        <div key={item.modulo} className="bg-slate-800/50 rounded-xl px-3 py-2">
+                          <span className="text-[10px] text-indigo-300 font-black block mb-0.5">{item.modulo}</span>
+                          <span className="text-[10px] text-slate-300 leading-relaxed">{item.accion}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

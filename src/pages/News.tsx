@@ -6,6 +6,7 @@ import { supabase, Noticias, FotoNoticia } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Newspaper, Trash2, Image as ImageIcon, Upload, Globe, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { FieldHelp } from '../components/FieldHelp';
 
 interface NoticiaConFotos extends Noticias {
   fotos: FotoNoticia[];
@@ -281,57 +282,69 @@ export const News: React.FC = () => {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título
-            </label>
-            <input
-              type="text"
-              value={formData.titulo}
-              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-              placeholder="Ej: Suspensión de actividades por lluvia"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contenido de la Noticia
-            </label>
-            <textarea
-              value={formData.contenido}
-              onChange={(e) => setFormData({ ...formData, contenido: e.target.value })}
-              placeholder="Escribe el cuerpo completo de la noticia..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[150px]"
-              required
-            />
-          </div>
-
-          <div>
-            <span className="block text-sm font-medium text-gray-700 mb-2">
-              Imagen (Opcional)
-            </span>
-            <label
-              htmlFor="img-upload"
-              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition cursor-pointer bg-gray-50 flex flex-col items-center justify-center w-full"
+            <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
+            <FieldHelp
+              hint="Escribe un título claro y conciso que resuma el contenido de la noticia o aviso."
+              example="Suspensión de actividades el viernes 18"
+              position="bottom"
             >
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                id="img-upload"
+                type="text"
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                placeholder="Ej: Suspensión de actividades por lluvia"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                required
               />
-              <div className="bg-white p-3 rounded-full shadow-sm mb-3">
-                <ImageIcon className="w-8 h-8 text-orange-500" />
-              </div>
-              <span className="text-sm font-medium text-gray-700 mb-1">
-                {formData.file ? formData.file.name : 'Añadir foto a la noticia'}
-              </span>
-              <span className="text-xs text-gray-500">
-                {formData.file ? `${(formData.file.size / (1024 * 1024)).toFixed(2)} MB` : 'PNG, JPG. Máximo 5MB'}
-              </span>
-            </label>
+            </FieldHelp>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contenido de la Noticia</label>
+            <FieldHelp
+              hint="Redacta el cuerpo completo de la noticia. Incluye todos los detalles relevantes para los representantes."
+              example="Se informa que el día viernes 18 no habrá clases debido a... Firma: Dirección."
+              position="bottom"
+            >
+              <textarea
+                value={formData.contenido}
+                onChange={(e) => setFormData({ ...formData, contenido: e.target.value })}
+                placeholder="Escribe el cuerpo completo de la noticia..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[150px]"
+                required
+              />
+            </FieldHelp>
+          </div>
+
+          <div>
+            <span className="block text-sm font-medium text-gray-700 mb-2">Imagen (Opcional)</span>
+            <FieldHelp
+              hint="Puedes adjuntar una imagen representativa de la noticia. Formatos PNG o JPG, máximo 5MB."
+              example="cartelera_evento.jpg"
+              position="bottom"
+            >
+              <label
+                htmlFor="img-upload"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition cursor-pointer bg-gray-50 flex flex-col items-center justify-center w-full"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="img-upload"
+                />
+                <div className="bg-white p-3 rounded-full shadow-sm mb-3">
+                  <ImageIcon className="w-8 h-8 text-orange-500" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 mb-1">
+                  {formData.file ? formData.file.name : 'Añadir foto a la noticia'}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {formData.file ? `${(formData.file.size / (1024 * 1024)).toFixed(2)} MB` : 'PNG, JPG. Máximo 5MB'}
+                </span>
+              </label>
+            </FieldHelp>
           </div>
 
           <div className="flex gap-3 pt-4">
