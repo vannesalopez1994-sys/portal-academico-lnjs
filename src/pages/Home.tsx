@@ -154,9 +154,11 @@ export const Home: React.FC = () => {
               </div>
             ) : (
               news.map((item, index) => (
-                <div
+                <Link
                   key={item.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-100 transition-all duration-300 flex flex-col sm:flex-row group relative"
+                  to="/noticias"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-100 transition-all duration-300 flex flex-col sm:flex-row group relative cursor-pointer no-underline block"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   {/* Accent bar lateral */}
                   <div className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${index === 0 ? 'bg-gradient-to-b from-blue-500 to-indigo-600' : index === 1 ? 'bg-gradient-to-b from-emerald-400 to-teal-600' : 'bg-gradient-to-b from-amber-400 to-orange-500'}`} />
@@ -201,12 +203,12 @@ export const Home: React.FC = () => {
                         <Clock className="w-3.5 h-3.5 text-blue-400" />
                         {new Date(item.fecha).toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
-                      <span className="text-xs font-bold text-blue-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
                         Leer más <ArrowRight className="w-3 h-3" />
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
