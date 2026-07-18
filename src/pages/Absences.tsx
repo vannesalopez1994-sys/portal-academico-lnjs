@@ -32,6 +32,12 @@ export const Absences: React.FC = () => {
   const [expandedYear, setExpandedYear] = useState<string | null>(null);
   const [activeSections, setActiveSections] = useState<Record<string, string>>({});
 
+  // Estados para búsqueda, filtro de estado y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'aprobada' | 'rechazada'>('todos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [newAbsence, setNewAbsence] = useState({
     nombre_alumno_descripcion: '',
     ano_escolar: '',
@@ -539,12 +545,36 @@ export const Absences: React.FC = () => {
     }
   }, [groupedByYearAndSection, expandedYear]);
 
+  // Reiniciar página a 1 cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, selectedStudentFilter]);
+
   const displayedAbsences = React.useMemo(() => {
+    let result = absences;
+
     if (selectedStudentFilter) {
-      return absences.filter(abs => abs.nombre_alumno_descripcion.trim() === selectedStudentFilter);
+      result = result.filter(abs => abs.nombre_alumno_descripcion.trim() === selectedStudentFilter);
     }
-    return absences;
-  }, [absences, selectedStudentFilter]);
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase().trim();
+      result = result.filter(abs => abs.nombre_alumno_descripcion.toLowerCase().includes(term));
+    }
+
+    if (statusFilter !== 'todos') {
+      result = result.filter(abs => abs.estado === statusFilter);
+    }
+
+    return result;
+  }, [absences, selectedStudentFilter, searchTerm, statusFilter]);
+
+  const paginatedAbsences = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return displayedAbsences.slice(startIndex, startIndex + itemsPerPage);
+  }, [displayedAbsences, currentPage]);
+
+  const totalPages = Math.ceil(displayedAbsences.length / itemsPerPage);
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -641,6 +671,57 @@ export const Absences: React.FC = () => {
             </svg>
             {downloadingPDF ? 'Generando Reporte...' : 'Descargar Reporte PDF'}
           </button>
+        </div>
+      )}
+      {viewMode === 'list' && (
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          {/* Buscador */}
+          <div className="relative flex-1 max-w-md w-full">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 text-sm">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar alumno por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none text-sm font-medium"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 text-xs font-bold"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+
+          {/* Filtro de Estado */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Filtrar por:</span>
+            {(['todos', 'pendiente', 'aprobada', 'rechazada'] as const).map((status) => {
+              const isActive = statusFilter === status;
+              const statusStyles = {
+                todos: { active: 'bg-blue-600 text-white shadow-blue-100', inactive: 'bg-white hover:bg-gray-50 text-gray-600 border-gray-250/70' },
+                pendiente: { active: 'bg-orange-500 text-white shadow-orange-100', inactive: 'bg-orange-50/50 hover:bg-orange-50 text-orange-700 border-orange-150' },
+                aprobada: { active: 'bg-green-600 text-white shadow-green-100', inactive: 'bg-green-50/50 hover:bg-green-50 text-green-700 border-green-150' },
+                rechazada: { active: 'bg-red-600 text-white shadow-red-100', inactive: 'bg-red-50/50 hover:bg-red-50 text-red-700 border-red-150' },
+              };
+              const style = statusStyles[status];
+              return (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all border ${
+                    isActive ? `${style.active} scale-105 border-transparent` : `${style.inactive}`
+                  }`}
+                >
+                  {status === 'todos' ? 'Todos' : status === 'pendiente' ? 'Pendientes' : status === 'aprobada' ? 'Aprobadas' : 'Rechazadas'}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -779,7 +860,7 @@ export const Absences: React.FC = () => {
             </p>
           </div>
         ) : (
-          displayedAbsences.map((absence) => (
+          paginatedAbsences.map((absence) => (
             <div
               key={absence.id}
               className={`bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 ${getCardBorderColor(absence.estado)} p-6 hover:shadow-md transition-all group`}
@@ -917,6 +998,44 @@ export const Absences: React.FC = () => {
               </div>
             </div>
           ))
+        )}
+
+        {/* Paginación de Solicitudes */}
+        {viewMode === 'list' && totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-gray-100">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Mostrando {Math.min(displayedAbsences.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(displayedAbsences.length, currentPage * itemsPerPage)} de {displayedAbsences.length} solicitudes
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
