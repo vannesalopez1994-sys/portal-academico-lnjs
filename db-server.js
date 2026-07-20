@@ -652,17 +652,7 @@ const server = http.createServer(async (req, res) => {
       const { email, password } = await readJsonBody(req);
 
       try {
-        const now = Date.now();
-        const attempt = loginAttempts.get(email) || { attempts: 0, lockUntil: 0 };
-
-        if (attempt.lockUntil > now) {
-          res.writeHead(429, { 'Content-Type': 'application/json', ...corsHeaders });
-          res.end(JSON.stringify({ 
-            data: { user: null, session: null }, 
-            error: { message: 'Acceso denegado. Tu cuenta está bloqueada. Comunícate con coordinación.' } 
-          }));
-          return;
-        }
+        const attempt = loginAttempts.get(email) || { attempts: 0 };
 
         const hash = hashPassword(password);
 
@@ -674,9 +664,9 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({
             data: { user: null, session: null },
-            error: { message: 'Acceso denegado. Tu cuenta está bloqueada. Comunícate con coordinación.' }
+            error: { message: 'Acceso denegado. Tu cuenta está bloqueada y desactivada. Comunícate con coordinación.' }
           }));
-          await logActivity(null, email, 'Intento de acceso denegado', 'Sistema');
+          await logActivity(null, email, 'Intento de acceso denegado (cuenta inactiva)', 'Sistema');
           return;
         }
 
@@ -697,12 +687,11 @@ const server = http.createServer(async (req, res) => {
                 ['inactivo', email]
               );
             }
-            attempt.lockUntil = now + 15 * 60 * 1000;
-            loginAttempts.set(email, attempt);
-            res.writeHead(429, { 'Content-Type': 'application/json', ...corsHeaders });
+            loginAttempts.delete(email); // Limpiar intentos en memoria ya que la cuenta fue desactivada en BD
+            res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: 'Tu cuenta ha sido bloqueada y desactivada por seguridad al superar los 3 intentos fallidos de inicio de sesión. Comunícate con coordinación.' } 
+              error: { message: 'Tu cuenta ha sido desactivada por seguridad al superar los 3 intentos fallidos de inicio de sesión. Comunícate con coordinación.' } 
             }));
           } else {
             loginAttempts.set(email, attempt);
