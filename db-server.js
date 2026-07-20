@@ -652,12 +652,13 @@ const server = http.createServer(async (req, res) => {
       const { email, password } = await readJsonBody(req);
 
       try {
-        const attempt = loginAttempts.get(email) || { attempts: 0 };
+        const attempt = loginAttempts.get(email.toLowerCase().trim()) || { attempts: 0 };
 
         const hash = hashPassword(password);
 
+        // Buscar estado de forma insensible a mayúsculas/minúsculas
         const statusRes = await pool.query(
-          'SELECT estado FROM public.usuarios WHERE correo = $1',
+          'SELECT estado FROM public.usuarios WHERE LOWER(correo) = LOWER($1)',
           [email]
         );
         if (statusRes.rows.length > 0 && statusRes.rows[0].estado === 'inactivo') {
@@ -670,8 +671,9 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // Buscar en auth_users de forma insensible a mayúsculas/minúsculas
         const dbRes = await pool.query(
-          'SELECT id, email, encrypted_password, raw_user_meta_data, created_at FROM public.auth_users WHERE email = $1',
+          'SELECT id, email, encrypted_password, raw_user_meta_data, created_at FROM public.auth_users WHERE LOWER(email) = LOWER($1)',
           [email]
         );
 
@@ -681,20 +683,20 @@ const server = http.createServer(async (req, res) => {
 
           if (attempt.attempts >= 3) {
             // Desactivar el usuario en la base de datos (excepto el Administrador Máster por seguridad)
-            if (email !== 'adminmaster2026l.n.joaquinas@gmail.com') {
+            if (email.toLowerCase().trim() !== 'adminmaster2026l.n.joaquinas@gmail.com') {
               await pool.query(
-                'UPDATE public.usuarios SET estado = $1 WHERE correo = $2',
+                'UPDATE public.usuarios SET estado = $1 WHERE LOWER(correo) = LOWER($2)',
                 ['inactivo', email]
               );
             }
-            loginAttempts.delete(email); // Limpiar intentos en memoria ya que la cuenta fue desactivada en BD
+            loginAttempts.delete(email.toLowerCase().trim()); // Limpiar intentos en memoria ya que la cuenta fue desactivada en BD
             res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
               error: { message: 'Tu cuenta ha sido desactivada por seguridad al superar los 3 intentos fallidos de inicio de sesión. Comunícate con coordinación.' } 
             }));
           } else {
-            loginAttempts.set(email, attempt);
+            loginAttempts.set(email.toLowerCase().trim(), attempt);
             res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
@@ -704,14 +706,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        loginAttempts.delete(email);
+        loginAttempts.delete(email.toLowerCase().trim());
 
         const userRow = dbRes.rows[0];
 
-        // Autocorrección/Sincronización de ID entre public.usuarios y public.auth_users
+        // Autocorrección/Sincronización de ID entre public.usuarios y public.auth_users (insensible a mayúsculas/minúsculas)
         try {
           const profileCheck = await pool.query(
-            'SELECT id, nombre_completo FROM public.usuarios WHERE correo = $1',
+            'SELECT id, nombre_completo FROM public.usuarios WHERE LOWER(correo) = LOWER($1)',
             [email]
           );
           if (profileCheck.rows.length > 0) {
@@ -720,11 +722,11 @@ const server = http.createServer(async (req, res) => {
               console.log(`[Auth Sync] ID mismatch for ${email}. Sincronizando...`);
               try {
                 // Intentamos actualizar la tabla public.usuarios primero
-                await pool.query('UPDATE public.usuarios SET id = $1 WHERE correo = $2', [userRow.id, email]);
+                await pool.query('UPDATE public.usuarios SET id = $1 WHERE LOWER(correo) = LOWER($2)', [userRow.id, email]);
                 console.log(`[Auth Sync] public.usuarios actualizado con éxito a ${userRow.id}`);
               } catch (errSync) {
                 // Si falla por dependencias de clave foránea, actualizamos public.auth_users
-                await pool.query('UPDATE public.auth_users SET id = $1 WHERE email = $2', [profile.id, email]);
+                await pool.query('UPDATE public.auth_users SET id = $1 WHERE LOWER(email) = LOWER($2)', [profile.id, email]);
                 userRow.id = profile.id;
                 console.log(`[Auth Sync] public.auth_users actualizado con éxito a ${profile.id}`);
               }
