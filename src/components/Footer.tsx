@@ -108,11 +108,8 @@ export const Footer: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Divider + Copyright */}
-                <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-gray-600 text-[10px]">
-                        © 2026 L.N. Joaquina Sánchez. Todos los derechos reservados.
-                    </p>
+                {/* Divider + Info */}
+                <div className="border-t border-white/5 pt-4 flex items-center justify-center gap-2">
                     <div className="flex items-center gap-1.5 text-gray-700 text-[10px]">
                         <School2 className="w-3 h-3" />
                         <span>Liceo Nacional Joaquina Sánchez · Ciudad Guayana, Venezuela</span>
