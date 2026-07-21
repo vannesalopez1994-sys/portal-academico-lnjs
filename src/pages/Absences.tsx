@@ -284,6 +284,11 @@ export const Absences: React.FC = () => {
       return;
     }
 
+    if (newAbsence.fecha_hasta < newAbsence.fecha_desde) {
+      toast.error('La fecha de fin (hasta) no puede ser anterior a la fecha de inicio (desde).');
+      return;
+    }
+
     try {
       setUploading(true);
 
@@ -1137,6 +1142,7 @@ export const Absences: React.FC = () => {
                     <input
                       type="date"
                       value={newAbsence.fecha_hasta}
+                      min={newAbsence.fecha_desde || undefined}
                       onChange={(e) => setNewAbsence({ ...newAbsence, fecha_hasta: e.target.value })}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition outline-none"
                     />
