@@ -1058,7 +1058,7 @@ export const Absences: React.FC = () => {
                     type="text"
                     value={newAbsence.nombre_alumno_descripcion}
                     onChange={(e) => setNewAbsence({ ...newAbsence, nombre_alumno_descripcion: e.target.value })}
-                    placeholder="Ej. Juan Pérez - 3er Año C"
+                    placeholder="Ej. Juan Pérez"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
                   />
                 </FieldHelp>
