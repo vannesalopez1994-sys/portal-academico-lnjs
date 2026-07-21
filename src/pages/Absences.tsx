@@ -289,6 +289,12 @@ export const Absences: React.FC = () => {
       return;
     }
 
+    const phoneDigits = newAbsence.telefono_representante.replace(/\D/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      toast.error('El número de teléfono debe incluir entre 10 y 11 dígitos numéricos (ejemplo: 0412-1234567 o 04121234567).');
+      return;
+    }
+
     try {
       setUploading(true);
 
@@ -1159,14 +1165,14 @@ export const Absences: React.FC = () => {
                   example="0412-7654321"
                   position="bottom"
                 >
-                  <input
-                    type="tel"
-                    value={newAbsence.telefono_representante}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, telefono_representante: e.target.value })}
-                    placeholder="Ej. 0412-1234567"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                    required
-                  />
+                    <input
+                      type="tel"
+                      value={newAbsence.telefono_representante}
+                      onChange={(e) => setNewAbsence({ ...newAbsence, telefono_representante: e.target.value.replace(/[^0-9\-]/g, '') })}
+                      placeholder="Ej. 0412-1234567"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                      required
+                    />
                 </FieldHelp>
               </div>
 
