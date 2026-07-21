@@ -40,10 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return name;
   };
 
-  const fetchProfile = async (userId: string, retries = 3, delayMs = 500): Promise<Usuarios | null> => {
-    console.log(`Fetching profile for user: ${userId}, retries left: ${retries}`);
+  const fetchProfile = async (userId: string, userEmail?: string, retries = 3, delayMs = 500): Promise<Usuarios | null> => {
+    console.log(`Fetching profile for user: ${userId} (${userEmail}), retries left: ${retries}`);
     try {
-      // Add a timeout to prevent hanging the whole app
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
       );
@@ -58,21 +57,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching profile:', error);
-        return null;
       }
 
-      if (!data && retries > 0) {
+      if (data) {
+        console.log('Profile fetched successfully by ID:', data);
+        return data;
+      }
+
+      // Fallback por correo electrónico si el ID no coincide aún
+      if (userEmail) {
+        const { data: emailData } = await supabase
+          .from('usuarios')
+          .select('*, roles(nombre_rol)')
+          .eq('correo', userEmail)
+          .maybeSingle();
+
+        if (emailData) {
+          console.log('Profile found by email, syncing ID:', emailData);
+          supabase.from('usuarios').update({ id: userId }).eq('correo', userEmail);
+          return emailData;
+        }
+      }
+
+      if (retries > 0) {
         console.warn(`Profile not found, retrying in ${delayMs}ms...`);
         await new Promise(res => setTimeout(res, delayMs));
-        return fetchProfile(userId, retries - 1, delayMs);
+        return fetchProfile(userId, userEmail, retries - 1, delayMs);
       }
 
-      console.log('Profile fetched successfully:', data);
-      return data;
+      return null;
     } catch (err) {
       console.error('Fetch profile timed out or failed:', err);
       if (retries > 0) {
-        return new Promise(res => setTimeout(res, delayMs)).then(() => fetchProfile(userId, retries - 1, delayMs));
+        return new Promise(res => setTimeout(res, delayMs)).then(() => fetchProfile(userId, userEmail, retries - 1, delayMs));
       }
       return null;
     }
@@ -80,23 +97,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const ensureProfileExists = async (user: User) => {
     try {
-      const { data: profile } = await supabase
+      // 1. Buscar primero por ID
+      const { data: profileById } = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (!profile) {
-        console.warn('Profile missing for user, creating default...');
-        const { data: roles } = await supabase.from('roles').select('id_rol').eq('nombre_rol', 'Representante').maybeSingle();
+      if (profileById) return;
 
-        await supabase.from('usuarios').insert({
-          id: user.id,
-          nombre_completo: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
-          correo: user.email!,
-          id_rol: roles?.id_rol
-        });
+      // 2. Buscar por correo para sincronizar ID si el usuario fue creado previamente
+      if (user.email) {
+        const { data: profileByEmail } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('correo', user.email)
+          .maybeSingle();
+
+        if (profileByEmail) {
+          console.log('Syncing user ID in usuarios table for email:', user.email);
+          await supabase
+            .from('usuarios')
+            .update({ id: user.id })
+            .eq('correo', user.email);
+          return;
+        }
       }
+
+      // 3. Crear perfil nuevo si no existe ni por ID ni por correo
+      console.warn('Profile missing for user, creating default...');
+      const { data: roles } = await supabase.from('roles').select('id_rol').eq('nombre_rol', 'Representante').maybeSingle();
+
+      await supabase.from('usuarios').insert({
+        id: user.id,
+        nombre_completo: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+        correo: user.email!,
+        id_rol: roles?.id_rol || 3,
+        estado: 'activo'
+      });
     } catch (err) {
       console.error('Error ensuring profile exists:', err);
     }
@@ -106,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       console.log('Initializing Auth...');
       try {
-        // Add a general timeout for auth initialization
         const authTimeout = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Auth init timeout')), 15000)
         );
@@ -119,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfileLoading(true);
             try {
               await ensureProfileExists(session.user);
-              const profileData = await fetchProfile(session.user.id);
+              const profileData = await fetchProfile(session.user.id, session.user.email);
               if (!profileData) {
                 console.warn('Session user has no profile in db. Logging out...');
                 await supabase.auth.signOut();
@@ -158,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfileLoading(true);
             try {
               await ensureProfileExists(session.user);
-              const profileData = await fetchProfile(session.user.id);
+              const profileData = await fetchProfile(session.user.id, session.user.email);
               if (!profileData) {
                 console.warn('Session user has no profile in db. Logging out...');
                 await supabase.auth.signOut();
