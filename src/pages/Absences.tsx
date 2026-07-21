@@ -284,6 +284,11 @@ export const Absences: React.FC = () => {
       return;
     }
 
+    if (/\d/.test(newAbsence.nombre_alumno_descripcion)) {
+      toast.error('El nombre del estudiante no debe contener números.');
+      return;
+    }
+
     if (newAbsence.fecha_hasta < newAbsence.fecha_desde) {
       toast.error('La fecha de fin (hasta) no puede ser anterior a la fecha de inicio (desde).');
       return;
@@ -1070,7 +1075,7 @@ export const Absences: React.FC = () => {
                   <input
                     type="text"
                     value={newAbsence.nombre_alumno_descripcion}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, nombre_alumno_descripcion: e.target.value })}
+                    onChange={(e) => setNewAbsence({ ...newAbsence, nombre_alumno_descripcion: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '') })}
                     placeholder="Ej. Juan Pérez"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
                   />
