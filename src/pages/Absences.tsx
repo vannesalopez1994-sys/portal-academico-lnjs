@@ -675,7 +675,8 @@ export const Absences: React.FC = () => {
       )}
       {viewMode === 'list' && (
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          {/* Buscador */}
+          {/* Buscador — solo visible para admin y secretaría */}
+          {userRole !== 'parent' && (
           <div className="relative flex-1 max-w-md w-full">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 text-sm">
               🔍
@@ -696,6 +697,7 @@ export const Absences: React.FC = () => {
               </button>
             )}
           </div>
+          )}
 
           {/* Filtro de Estado */}
           <div className="flex flex-wrap items-center gap-2">
