@@ -187,10 +187,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (user || localStorage.getItem('local_session')) {
-      console.log('User already signed in or session exists in localStorage, skipping signIn call.');
-      return;
-    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
