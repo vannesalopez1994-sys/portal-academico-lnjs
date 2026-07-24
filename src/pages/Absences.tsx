@@ -737,7 +737,7 @@ export const Absences: React.FC = () => {
                     isActive ? `${style.active} scale-105 border-transparent` : `${style.inactive}`
                   }`}
                 >
-                  {status === 'todos' ? 'Todos' : status === 'pendiente' ? 'Pendientes' : status === 'aprobada' ? 'Aprobadas' : 'Rechazadas'}
+                  {status === 'todos' ? 'Todos' : status === 'pendiente' ? 'Pendiente' : status === 'aprobada' ? 'Aprobada' : 'Rechazada'}
                 </button>
               );
             })}

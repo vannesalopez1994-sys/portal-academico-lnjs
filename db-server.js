@@ -665,7 +665,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
           res.end(JSON.stringify({
             data: { user: null, session: null },
-            error: { message: 'Acceso denegado. Tu cuenta está bloqueada y desactivada. Comunícate con coordinación.' }
+            error: { message: 'Acceso denegado.' }
           }));
           await logActivity(null, email, 'Intento de acceso denegado (cuenta inactiva)', 'Sistema');
           return;
@@ -693,7 +693,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: 'Tu cuenta ha sido desactivada por seguridad al superar los 3 intentos fallidos de inicio de sesión. Comunícate con coordinación.' } 
+              error: { message: 'Acceso denegado.' } 
             }));
           } else {
             loginAttempts.set(email.toLowerCase().trim(), attempt);
