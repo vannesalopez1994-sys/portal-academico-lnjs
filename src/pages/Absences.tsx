@@ -208,12 +208,14 @@ export const Absences: React.FC = () => {
         body: bodyData,
         theme: 'striped',
         headStyles: {
-          fillColor: [10, 22, 40], // Azul oscuro (#0a1628)
-          textColor: [255, 255, 255],
+          fillColor: [255, 255, 255], // Blanco
+          textColor: [10, 22, 40], // Texto oscuro / negro
           fontSize: 9,
           fontStyle: 'bold',
           halign: 'center',
-          valign: 'middle'
+          valign: 'middle',
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1
         },
         columnStyles: {
           0: { cellWidth: 15, halign: 'center' }, // N°
