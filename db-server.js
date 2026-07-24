@@ -646,6 +646,33 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ---------------------------------
+    // API: ADMIN - CLEANUP HISTORIAL (TEMPORAL - ONE TIME USE)
+    // ---------------------------------
+    if (pathname === '/api/admin/cleanup-historial' && req.method === 'POST') {
+      const { secret } = await readJsonBody(req);
+      if (secret !== 'LNJS_CLEANUP_2026_SECURE') {
+        res.writeHead(403, { 'Content-Type': 'application/json', ...corsHeaders });
+        res.end(JSON.stringify({ error: 'No autorizado' }));
+        return;
+      }
+      try {
+        const countRes = await pool.query(
+          `SELECT COUNT(*) AS total FROM public.historial_accesos WHERE fecha_acceso < '2026-07-24 00:00:00'`
+        );
+        const total = countRes.rows[0].total;
+        const deleteRes = await pool.query(
+          `DELETE FROM public.historial_accesos WHERE fecha_acceso < '2026-07-24 00:00:00'`
+        );
+        res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders });
+        res.end(JSON.stringify({ message: `Limpieza completada. Registros eliminados: ${deleteRes.rowCount} de ${total} encontrados.` }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...corsHeaders });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+      return;
+    }
+
+    // ---------------------------------
     // API: AUTHENTICATION (SIGN IN)
     // ---------------------------------
     if (pathname === '/api/auth/signin' && req.method === 'POST') {
