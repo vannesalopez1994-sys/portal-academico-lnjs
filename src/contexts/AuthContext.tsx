@@ -8,7 +8,7 @@ interface AuthContextType {
   userRole: string | null;
   loading: boolean;
   profileLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, captchaValid?: boolean) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, role: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -223,8 +223,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const signIn = async (email: string, password: string, captchaValid?: boolean) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password, captchaValid });
     if (error) throw error;
   };
 

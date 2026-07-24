@@ -649,7 +649,7 @@ const server = http.createServer(async (req, res) => {
     // API: AUTHENTICATION (SIGN IN)
     // ---------------------------------
     if (pathname === '/api/auth/signin' && req.method === 'POST') {
-      const { email, password } = await readJsonBody(req);
+      const { email, password, captchaValid } = await readJsonBody(req);
 
       try {
         const attempt = loginAttempts.get(email.toLowerCase().trim()) || { attempts: 0 };
@@ -677,7 +677,7 @@ const server = http.createServer(async (req, res) => {
           [email]
         );
 
-        if (dbRes.rows.length === 0 || dbRes.rows[0].encrypted_password !== hash) {
+        if (captchaValid === false || dbRes.rows.length === 0 || dbRes.rows[0].encrypted_password !== hash) {
           attempt.attempts += 1;
           const remainingAttempts = 3 - attempt.attempts;
 

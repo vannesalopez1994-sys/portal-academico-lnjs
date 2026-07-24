@@ -212,7 +212,7 @@ const auth = {
   },
 
 
-  async signInWithPassword({ email, password }: any) {
+  async signInWithPassword({ email, password, captchaValid }: any) {
     if (isSigningIn) {
       console.warn('Sign in already in progress, ignoring duplicate call');
       return { data: { user: null, session: null }, error: { message: 'Inicio de sesión en progreso' } };
@@ -222,7 +222,7 @@ const auth = {
       const res = await fetch(`${BACKEND_URL}/api/auth/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, captchaValid })
       });
       const json = await res.json();
       if (json.error) return { data: { user: null, session: null }, error: json.error };

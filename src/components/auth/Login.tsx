@@ -42,11 +42,6 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
     setError('');
     setSuccess('');
 
-    if (!isRegistering && !captchaValid) {
-      setError('Captcha incorrecto');
-      return;
-    }
-
     // Strong password validation only on registration
     if (isRegistering) {
       const failedRules = PASSWORD_RULES.filter(r => !r.test(password));
@@ -63,7 +58,7 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
         await signUp(email, password, fullName, role);
         localStorage.setItem('showWelcomeToast', 'true');
       } else {
-        await signIn(email, password);
+        await signIn(email, password, captchaValid);
       }
     } catch (err: any) {
       setError(err.message || 'Error en la autenticación');
