@@ -42,6 +42,12 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
     setError('');
     setSuccess('');
 
+    // Validar Captcha antes de intentar iniciar sesión
+    if (!isRegistering && !captchaValid) {
+      setError('Por favor, ingresa el código de verificación (Captcha) correctamente.');
+      return;
+    }
+
     // Strong password validation only on registration
     if (isRegistering) {
       const failedRules = PASSWORD_RULES.filter(r => !r.test(password));
@@ -61,7 +67,8 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
         await signIn(email, password, captchaValid);
       }
     } catch (err: any) {
-      setError(err.message || 'Error en la autenticación');
+      const msg = typeof err === 'string' ? err : (err?.message || 'Error en la autenticación');
+      setError(msg);
     } finally {
       setLoading(false);
     }
