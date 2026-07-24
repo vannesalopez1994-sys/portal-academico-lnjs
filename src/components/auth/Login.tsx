@@ -42,12 +42,6 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
     setError('');
     setSuccess('');
 
-    // Validar Captcha antes de intentar iniciar sesión
-    if (!isRegistering && !captchaValid) {
-      setError('Por favor, ingresa el código de verificación (Captcha) correctamente.');
-      return;
-    }
-
     // Strong password validation only on registration
     if (isRegistering) {
       const failedRules = PASSWORD_RULES.filter(r => !r.test(password));

@@ -700,7 +700,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders });
             res.end(JSON.stringify({ 
               data: { user: null, session: null }, 
-              error: { message: `Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de desactivar la cuenta.` } 
+              error: { message: remainingAttempts === 1 ? 'Credenciales inválidas. Te queda 1 intento antes de desactivar la cuenta.' : `Credenciales inválidas. Te quedan ${remainingAttempts} intentos antes de desactivar la cuenta.` } 
             }));
           }
           return;
