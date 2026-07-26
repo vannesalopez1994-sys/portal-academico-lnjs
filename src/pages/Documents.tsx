@@ -4,7 +4,7 @@ import { FormModal } from '../components/FormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { supabase, DocumentosInstitucionales } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Trash2, Upload, ExternalLink, FileBadge2, FolderArchive, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Pencil, Upload, ExternalLink, FileBadge2, FolderArchive, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Documents: React.FC = () => {
@@ -14,6 +14,7 @@ export const Documents: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<DocumentosInstitucionales | null>(null);
+  const [editingDocument, setEditingDocument] = useState<DocumentosInstitucionales | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     file: null as File | null,
@@ -41,42 +42,96 @@ export const Documents: React.FC = () => {
     }
   };
 
+  const handleOpenEditModal = (doc: DocumentosInstitucionales) => {
+    setEditingDocument(doc);
+    setFormData({
+      titulo: doc.titulo,
+      file: null,
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.file) return;
+    if (!editingDocument && !formData.file) return;
 
     setUploading(true);
     try {
-      const fileExt = formData.file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `documentos_institucionales/${fileName}`;
+      if (editingDocument) {
+        // Modo Edición: actualizar título y opcionalmente el PDF
+        let nuevaRutaPdf = editingDocument.ruta_pdf;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documentos_pdf')
-        .upload(filePath, formData.file);
+        if (formData.file) {
+          // Subir nuevo PDF
+          const fileExt = formData.file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `documentos_institucionales/${fileName}`;
 
-      if (uploadError) throw uploadError;
+          const { error: uploadError } = await supabase.storage
+            .from('documentos_pdf')
+            .upload(filePath, formData.file);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos_pdf')
-        .getPublicUrl(filePath);
+          if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase
-        .from('documentos_institucionales')
-        .insert([
-          {
+          const { data: { publicUrl } } = supabase.storage
+            .from('documentos_pdf')
+            .getPublicUrl(filePath);
+
+          // Eliminar PDF anterior del storage
+          const oldPath = editingDocument.ruta_pdf.split('/documentos_pdf/')[1];
+          if (oldPath) {
+            await supabase.storage.from('documentos_pdf').remove([oldPath]);
+          }
+
+          nuevaRutaPdf = publicUrl;
+        }
+
+        const { error: updateError } = await supabase
+          .from('documentos_institucionales')
+          .update({
             titulo: formData.titulo,
-            ruta_pdf: publicUrl,
-          },
-        ]);
+            ruta_pdf: nuevaRutaPdf,
+          })
+          .eq('id', editingDocument.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
+
+        toast.success('Documento actualizado con éxito.');
+      } else {
+        // Modo Creación
+        const fileExt = formData.file!.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `documentos_institucionales/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documentos_pdf')
+          .upload(filePath, formData.file!);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('documentos_pdf')
+          .getPublicUrl(filePath);
+
+        const { error: insertError } = await supabase
+          .from('documentos_institucionales')
+          .insert([
+            {
+              titulo: formData.titulo,
+              ruta_pdf: publicUrl,
+            },
+          ]);
+
+        if (insertError) throw insertError;
+
+        toast.success('Documento subido con éxito.');
+      }
 
       await fetchDocuments();
       handleCloseModal();
     } catch (error: any) {
-      console.error('Error uploading document:', error);
-      toast.error('Error al subir el documento: ' + (error.message || 'Error desconocido'));
+      console.error('Error al guardar documento:', error);
+      toast.error('Error al guardar el documento: ' + (error.message || 'Error desconocido'));
     } finally {
       setUploading(false);
     }
@@ -109,6 +164,7 @@ export const Documents: React.FC = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setEditingDocument(null);
     setFormData({
       titulo: '',
       file: null,
@@ -203,13 +259,22 @@ export const Documents: React.FC = () => {
                       </span>
                     </div>
                     {canManage && (
-                      <button
-                        onClick={() => setDocumentToDelete(doc)}
-                        className="p-2 text-gray-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
-                        title="Eliminar documento"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEditModal(doc)}
+                          className="p-2 text-gray-200 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          title="Editar documento"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDocumentToDelete(doc)}
+                          className="p-2 text-gray-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          title="Eliminar documento"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -242,7 +307,7 @@ export const Documents: React.FC = () => {
       <FormModal
         isOpen={showModal}
         onClose={handleCloseModal}
-        title="Subir Nuevo Documento"
+        title={editingDocument ? "Editar Documento" : "Subir Nuevo Documento"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -288,6 +353,11 @@ export const Documents: React.FC = () => {
               </label>
             </div>
           </div>
+          {editingDocument && (
+            <p className="text-xs text-gray-400 text-center">
+              Deja el campo vacío si no deseas reemplazar el PDF actual.
+            </p>
+          )}
 
           <div className="flex gap-3 pt-4">
             <button
@@ -301,17 +371,17 @@ export const Documents: React.FC = () => {
             <button
               type="submit"
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              disabled={uploading || !formData.file}
+              disabled={uploading || (!editingDocument && !formData.file)}
             >
               {uploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Subiendo...</span>
+                  <span>{editingDocument ? 'Guardando...' : 'Subiendo...'}</span>
                 </>
               ) : (
                 <>
                   <Upload className="w-4 h-4" />
-                  <span>Subir Documento</span>
+                  <span>{editingDocument ? 'Guardar Cambios' : 'Subir Documento'}</span>
                 </>
               )}
             </button>
