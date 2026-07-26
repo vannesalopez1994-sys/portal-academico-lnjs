@@ -4,7 +4,7 @@ import { FormModal } from '../components/FormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { supabase, Noticias, FotoNoticia } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Newspaper, Trash2, Image as ImageIcon, Upload, Globe, MessageSquare } from 'lucide-react';
+import { Newspaper, Trash2, Pencil, Image as ImageIcon, Upload, Globe, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FieldHelp } from '../components/FieldHelp';
 
@@ -17,6 +17,7 @@ export const News: React.FC = () => {
   const [news, setNews] = useState<NoticiaConFotos[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingNews, setEditingNews] = useState<NoticiaConFotos | null>(null);
   const [uploading, setUploading] = useState(false);
   const [newsToDelete, setNewsToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -61,58 +62,128 @@ export const News: React.FC = () => {
     }
   };
 
+  const handleOpenEditModal = (item: NoticiaConFotos) => {
+    setEditingNews(item);
+    setFormData({
+      titulo: item.titulo,
+      contenido: item.contenido,
+      file: null,
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setUploading(true);
     try {
-      // 1. Crear la Noticia
-      const { data: noticiaCreada, error: insertError } = await supabase
-        .from('noticias')
-        .insert([
-          {
+      if (editingNews) {
+        // 1. Actualizar título y contenido de la noticia existente
+        const { error: updateError } = await supabase
+          .from('noticias')
+          .update({
             titulo: formData.titulo,
             contenido: formData.contenido,
-            fecha: new Date().toISOString(),
-          },
-        ])
-        .select()
-        .single();
+          })
+          .eq('id', editingNews.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
 
-      // 2. Subir imagen si existe
-      if (formData.file && noticiaCreada) {
-        const fileExt = formData.file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `noticias/${fileName}`;
+        // 2. Si se seleccionó una nueva imagen, subirla y actualizar la tabla foto_noticia
+        if (formData.file) {
+          const fileExt = formData.file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `noticias/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('imagenes_sistema')
-          .upload(filePath, formData.file);
+          const { error: uploadError } = await supabase.storage
+            .from('imagenes_sistema')
+            .upload(filePath, formData.file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('imagenes_sistema')
-          .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage
+            .from('imagenes_sistema')
+            .getPublicUrl(filePath);
 
-        const { error: fotoError } = await supabase
-          .from('foto_noticia')
+          // Si ya tenía foto previa, eliminar archivo viejo de storage y actualizar registro
+          if (editingNews.fotos.length > 0) {
+            const oldFoto = editingNews.fotos[0];
+            const oldPath = oldFoto.ruta_foto.split('/imagenes_sistema/')[1];
+            if (oldPath) {
+              await supabase.storage.from('imagenes_sistema').remove([oldPath]);
+            }
+            const { error: fotoUpdateErr } = await supabase
+              .from('foto_noticia')
+              .update({ ruta_foto: publicUrl })
+              .eq('id', oldFoto.id);
+
+            if (fotoUpdateErr) throw fotoUpdateErr;
+          } else {
+            // Si no tenía foto, insertar nuevo registro de foto
+            const { error: fotoInsertErr } = await supabase
+              .from('foto_noticia')
+              .insert([
+                {
+                  id_noticia: editingNews.id,
+                  ruta_foto: publicUrl,
+                },
+              ]);
+
+            if (fotoInsertErr) throw fotoInsertErr;
+          }
+        }
+
+        toast.success('Noticia actualizada con éxito.');
+      } else {
+        // Modo Creación
+        const { data: noticiaCreada, error: insertError } = await supabase
+          .from('noticias')
           .insert([
             {
-              id_noticia: noticiaCreada.id,
-              ruta_foto: publicUrl,
+              titulo: formData.titulo,
+              contenido: formData.contenido,
+              fecha: new Date().toISOString(),
             },
-          ]);
+          ])
+          .select()
+          .single();
 
-        if (fotoError) throw fotoError;
+        if (insertError) throw insertError;
+
+        if (formData.file && noticiaCreada) {
+          const fileExt = formData.file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `noticias/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('imagenes_sistema')
+            .upload(filePath, formData.file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('imagenes_sistema')
+            .getPublicUrl(filePath);
+
+          const { error: fotoError } = await supabase
+            .from('foto_noticia')
+            .insert([
+              {
+                id_noticia: noticiaCreada.id,
+                ruta_foto: publicUrl,
+              },
+            ]);
+
+          if (fotoError) throw fotoError;
+        }
+
+        toast.success('Noticia publicada con éxito.');
       }
 
       await fetchNews();
       handleCloseModal();
     } catch (error: any) {
-      console.error('Error al crear noticia:', error);
+      console.error('Error al guardar noticia:', error);
       toast.error('Error: ' + (error.message || 'Error desconocido'));
     } finally {
       setUploading(false);
@@ -153,6 +224,7 @@ export const News: React.FC = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setEditingNews(null);
     setFormData({
       titulo: '',
       contenido: '',
@@ -251,13 +323,22 @@ export const News: React.FC = () => {
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <h3 className="text-2xl font-bold text-gray-950 leading-snug">{item.titulo}</h3>
                       {canManage && (
-                        <button
-                          onClick={() => setNewsToDelete(item.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                          title="Eliminar noticia"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleOpenEditModal(item)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                            title="Editar noticia"
+                          >
+                            <Pencil className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => setNewsToDelete(item.id)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            title="Eliminar noticia"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mb-4 font-semibold flex items-center gap-2">
@@ -278,7 +359,7 @@ export const News: React.FC = () => {
       <FormModal
         isOpen={showModal}
         onClose={handleCloseModal}
-        title="Crear Nueva Noticia o Aviso"
+        title={editingNews ? "Editar Noticia o Aviso" : "Crear Nueva Noticia o Aviso"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -364,12 +445,12 @@ export const News: React.FC = () => {
               {uploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Publicando...</span>
+                  <span>{editingNews ? 'Guardando...' : 'Publicando...'}</span>
                 </>
               ) : (
                 <>
                   <Upload className="w-4 h-4" />
-                  <span>Publicar Noticia</span>
+                  <span>{editingNews ? 'Guardar Cambios' : 'Publicar Noticia'}</span>
                 </>
               )}
             </button>
