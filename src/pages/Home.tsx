@@ -21,12 +21,12 @@ export const Home: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch latest 3 news
+      // Fetch latest 1 news (el más reciente publicado)
       const { data: noticiasData } = await supabase
         .from('noticias')
         .select('*')
         .order('fecha', { ascending: false })
-        .limit(3);
+        .limit(1);
 
       if (noticiasData) {
         const { data: fotosData } = await supabase
@@ -40,12 +40,12 @@ export const Home: React.FC = () => {
         setNews(combinedNews);
       }
 
-      // Fetch upcoming schedules
+      // Fetch upcoming schedules (el más reciente publicado)
       const { data: schedulesData } = await supabase
         .from('horarios')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(1);
 
       if (schedulesData) {
         setSchedules(schedulesData);
@@ -244,7 +244,10 @@ export const Home: React.FC = () => {
                       key={schedule.id}
                       className="group/item flex items-center justify-between gap-3 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-emerald-500/30 transition-all duration-200"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <Link
+                        to="/schedules"
+                        className="flex items-center gap-3 min-w-0 flex-1 hover:no-underline"
+                      >
                         <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black ${idx % 3 === 0 ? 'bg-emerald-500/20 text-emerald-300' : idx % 3 === 1 ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
                           <BookOpen className="w-4 h-4" />
                         </div>
@@ -257,7 +260,7 @@ export const Home: React.FC = () => {
                             {new Date(schedule.created_at).toLocaleDateString('es-ES')}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                       <a
                         href={schedule.ruta_pdf}
                         target="_blank"
