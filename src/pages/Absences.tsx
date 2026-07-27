@@ -277,7 +277,7 @@ export const Absences: React.FC = () => {
 
   const handleCreateAbsence = async () => {
     if (!selectedFile) {
-      toast.error('Por favor, selecciona un archivo PDF justificativo');
+      toast.error('Por favor, selecciona un archivo justificativo (PDF o Imagen)');
       return;
     }
 

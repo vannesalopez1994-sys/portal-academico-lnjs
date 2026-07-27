@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { FileUp, CheckCircle, Trash2, Download, AlertCircle, Loader2, GraduationCap, ClipboardList, Layers } from 'lucide-react';
+import { FileUp, CheckCircle, Trash2, Download, AlertCircle, Loader2, GraduationCap, ClipboardList, Layers, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase, PlanesEvaluacion } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { FieldHelp } from '../components/FieldHelp';
+import PDFViewer from '../components/PDFViewer';
 
 export const EvaluationPlans: React.FC = () => {
   const { userRole } = useAuth();
@@ -14,6 +15,8 @@ export const EvaluationPlans: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
 
 
   // Filtros de búsqueda
@@ -417,6 +420,19 @@ export const EvaluationPlans: React.FC = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => {
+                              setSelectedPdf({
+                                url: plan.ruta_pdf,
+                                name: `Plan de Evaluación - ${plan.materia} (${plan.anio_escolar} ${plan.seccion})`
+                              });
+                              setPdfViewerOpen(true);
+                            }}
+                            className="flex items-center justify-center gap-2 p-3 bg-[#0d2b5e]/10 text-[#0d2b5e] rounded-xl hover:bg-[#0d2b5e] hover:text-white transition shadow-sm border border-blue-100 font-semibold"
+                            title="Ver Plan de Evaluación"
+                          >
+                            <Eye size={18} />
+                          </button>
                           <a
                             href={plan.ruta_pdf}
                             target="_blank"
@@ -455,6 +471,14 @@ export const EvaluationPlans: React.FC = () => {
         cancelText="Cancelar"
         type="danger"
       />
+      {selectedPdf && (
+        <PDFViewer
+          isOpen={pdfViewerOpen}
+          onClose={() => setPdfViewerOpen(false)}
+          fileUrl={selectedPdf.url}
+          fileName={selectedPdf.name}
+        />
+      )}
     </Layout>
   );
 };

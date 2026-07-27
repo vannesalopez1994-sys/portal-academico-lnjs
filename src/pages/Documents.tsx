@@ -4,8 +4,9 @@ import { FormModal } from '../components/FormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { supabase, DocumentosInstitucionales } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Trash2, Pencil, Upload, ExternalLink, FileBadge2, FolderArchive, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Pencil, Upload, ExternalLink, FileBadge2, FolderArchive, ShieldCheck, Eye, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import PDFViewer from '../components/PDFViewer';
 
 export const Documents: React.FC = () => {
   const { userRole } = useAuth();
@@ -15,6 +16,8 @@ export const Documents: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<DocumentosInstitucionales | null>(null);
   const [editingDocument, setEditingDocument] = useState<DocumentosInstitucionales | null>(null);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     file: null as File | null,
@@ -287,15 +290,27 @@ export const Documents: React.FC = () => {
                     Publicado: {new Date(doc.created_at).toLocaleDateString('es-ES')}
                   </p>
 
-                  <a
-                    href={doc.ruta_pdf}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#0a1628] to-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl hover:opacity-90 transition-all duration-200 text-sm shadow-md shadow-blue-900/20"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Ver Documento
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedPdf({ url: doc.ruta_pdf, name: doc.titulo });
+                        setPdfViewerOpen(true);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#0a1628] to-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl hover:opacity-90 transition-all duration-200 text-sm shadow-md shadow-blue-900/20"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver Documento
+                    </button>
+                    <a
+                      href={doc.ruta_pdf}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl transition border border-blue-100"
+                      title="Descargar o Abrir"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
             ))
@@ -399,6 +414,14 @@ export const Documents: React.FC = () => {
         cancelText="Cancelar"
         type="danger"
       />
+      {selectedPdf && (
+        <PDFViewer
+          isOpen={pdfViewerOpen}
+          onClose={() => setPdfViewerOpen(false)}
+          fileUrl={selectedPdf.url}
+          fileName={selectedPdf.name}
+        />
+      )}
     </Layout>
   );
 };
