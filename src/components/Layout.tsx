@@ -386,11 +386,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                     </li>
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/30 flex items-center justify-center text-[10px] font-black text-blue-300">4</span>
-                      <p className="text-xs">Ingresa el motivo y las fechas. Luego, presiona <strong>Seleccionar justificativo PDF</strong> para adjuntar la constancia médica o justificativo correspondiente (obligatorio).</p>
+                      <p className="text-xs">Ingresa el motivo y las fechas. Luego, adjunta el justificativo obligatorio: puedes subir un <strong>documento PDF</strong> o una <strong>fotografía/imagen</strong> en formato <strong>JPG, PNG o WebP</strong> (máximo 5MB). Esto te permite, por ejemplo, tomar una foto del reposo médico directamente desde tu teléfono.</p>
                     </li>
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/30 flex items-center justify-center text-[10px] font-black text-blue-300">5</span>
-                      <p className="text-xs">Haz clic en <strong>Enviar Justificativo</strong>. La secretaría revisará y actualizará el estado de la solicitud.</p>
+                      <p className="text-xs">Haz clic en <strong>Enviar Justificativo</strong>. La secretaría revisará el archivo adjunto y actualizará el estado de la solicitud.</p>
                     </li>
                   </ul>
 
@@ -408,7 +408,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                         { campo: 'Fecha Inicio', valor: '10/03/2025' },
                         { campo: 'Fecha Fin', valor: '12/03/2025' },
                         { campo: 'Motivo', valor: 'Reposo médico por gripe (Dr. Ramírez).' },
-                        { campo: 'PDF adjunto', valor: 'reposo_medico_maria.pdf' },
+                        { campo: 'Justificativo adjunto', valor: 'reposo_medico.pdf  —ó—  foto_reposo.jpg / .png' },
                       ].map(item => (
                         <div key={item.campo} className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-1.5">
                           <span className="text-[10px] text-slate-400 font-medium w-36 flex-shrink-0">{item.campo}:</span>
@@ -436,7 +436,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                     </li>
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900/50 border border-indigo-700/30 flex items-center justify-center text-[10px] font-black text-indigo-300">2</span>
-                      <p className="text-xs"><strong>Aprobar/Rechazar:</strong> En la sección <strong>Inasistencias</strong>, haz clic en <strong>Ver Justificativo</strong> para auditar el PDF de cualquier alumno. Modifica su estado a "Aprobada" o "Rechazada" (en este caso indicando el motivo obligatoriamente).</p>
+                      <p className="text-xs"><strong>Aprobar/Rechazar:</strong> En la sección <strong>Inasistencias</strong>, haz clic en <strong>Ver Justificativo</strong> para auditar el archivo adjunto del alumno (puede ser un <strong>PDF o una imagen JPG/PNG</strong>). Modifica su estado a "Aprobada" o "Rechazada" (en este caso indicando el motivo obligatoriamente).</p>
                     </li>
                     <li className="flex gap-3">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900/50 border border-indigo-700/30 flex items-center justify-center text-[10px] font-black text-indigo-300">3</span>
