@@ -392,6 +392,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/30 flex items-center justify-center text-[10px] font-black text-blue-300">5</span>
                       <p className="text-xs">Haz clic en <strong>Enviar Justificativo</strong>. La secretaría revisará el archivo adjunto y actualizará el estado de la solicitud.</p>
                     </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/30 flex items-center justify-center text-[10px] font-black text-blue-300">6</span>
+                      <p className="text-xs"><strong>✏️ Corregir Justificativos Rechazados:</strong> Si la secretaría rechaza tu solicitud por alguna observación (ej. falta sello o firma médica), verás la razón en rojo en la tarjeta. Presiona el botón <strong>Corregir y Reenviar</strong>, adjunta el nuevo archivo corregido y reenvíalo. La solicitud cambiará automáticamente a estado <strong>Pendiente</strong> para una nueva evaluación.</p>
+                    </li>
                   </ul>
 
                   {/* Ejemplos de campos */}

@@ -5,7 +5,7 @@ import FileUpload from '../components/FileUpload';
 import PDFViewer from '../components/PDFViewer';
 import { Layout } from '../components/Layout';
 import { FieldHelp } from '../components/FieldHelp';
-import { Plus, CheckCircle, XCircle, Clock, Eye, Upload, Trash2, CalendarRange, FileWarning, ShieldAlert, ClipboardX, BookMarked } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Clock, Eye, Upload, Trash2, CalendarRange, FileWarning, ShieldAlert, ClipboardX, BookMarked, Pencil, RefreshCw, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -17,6 +17,11 @@ export const Absences: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAbsence, setEditingAbsence] = useState<Ausencias | null>(null);
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editMotivo, setEditMotivo] = useState('');
+  const [resubmitting, setResubmitting] = useState(false);
   const [selectedAbsence, setSelectedAbsence] = useState<Ausencias | null>(null);
   const [modalAction, setModalAction] = useState<'approve' | 'reject'>('approve');
   const [deleting, setDeleting] = useState(false);
@@ -367,6 +372,79 @@ export const Absences: React.FC = () => {
       toast.error('Error al crear la inasistencia. Por favor, intenta nuevamente.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleOpenEditModal = (absence: Ausencias) => {
+    setEditingAbsence(absence);
+    setEditMotivo(absence.motivo || '');
+    setEditFile(null);
+    setShowEditModal(true);
+  };
+
+  const handleResubmitAbsence = async () => {
+    if (!editingAbsence) return;
+
+    if (!editMotivo.trim()) {
+      toast.error('Por favor, ingresa el motivo de la inasistencia.');
+      return;
+    }
+
+    try {
+      setResubmitting(true);
+      let publicUrl = editingAbsence.ruta_pdf_justificativo;
+
+      if (editFile) {
+        const fileExt = editFile.name.split('.').pop();
+        const fileName = `${profile?.id}-${Date.now()}.${fileExt}`;
+        const filePath = `ausencias/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documentos_pdf')
+          .upload(filePath, editFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          toast.error(`Error al subir el nuevo justificativo: ${uploadError.message}`);
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('documentos_pdf')
+          .getPublicUrl(filePath);
+
+        publicUrl = urlData.publicUrl;
+      }
+
+      const { error: updateError } = await supabase
+        .from('ausencias')
+        .update({
+          motivo: editMotivo,
+          ruta_pdf_justificativo: publicUrl,
+          estado: 'pendiente',
+          created_at: new Date().toISOString(),
+        })
+        .eq('id', editingAbsence.id);
+
+      if (updateError) {
+        console.error('Error updating absence:', updateError);
+        toast.error(`Error al actualizar la solicitud: ${updateError.message}`);
+        throw updateError;
+      }
+
+      toast.success('¡Justificativo corregido y reenviado con éxito! Su solicitud pasó a estado Pendiente para revisión.');
+      setShowEditModal(false);
+      setEditingAbsence(null);
+      setEditFile(null);
+      setEditMotivo('');
+      fetchAbsences();
+    } catch (err: any) {
+      console.error('Error al reenviar inasistencia:', err);
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -955,22 +1033,37 @@ export const Absences: React.FC = () => {
                   )}
 
                   {absence.comentario_institucion && (
-                    <div className={`mt-4 p-4 rounded-xl border flex items-start gap-3 text-sm ${
+                    <div className={`mt-4 p-4 rounded-xl border flex flex-col gap-3 text-sm ${
                       absence.estado === 'aprobada'
                         ? 'bg-green-50/50 border-green-100 text-green-800'
                         : 'bg-red-50/50 border-red-100 text-red-800'
                     }`}>
-                      <div className={`p-1.5 rounded-lg shrink-0 ${
-                        absence.estado === 'aprobada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {absence.estado === 'aprobada' ? <CheckCircle size={16} /> : <ShieldAlert size={16} />}
+                      <div className="flex items-start gap-3">
+                        <div className={`p-1.5 rounded-lg shrink-0 ${
+                          absence.estado === 'aprobada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {absence.estado === 'aprobada' ? <CheckCircle size={16} /> : <ShieldAlert size={16} />}
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="font-bold text-xs uppercase tracking-wider mb-0.5">
+                            {absence.estado === 'aprobada' ? 'Comentario de Aprobación' : 'Razón del Rechazo'}
+                          </p>
+                          <p className="font-medium text-gray-700">{absence.comentario_institucion}</p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="font-bold text-xs uppercase tracking-wider mb-0.5">
-                          {absence.estado === 'aprobada' ? 'Comentario de Aprobación' : 'Razón del Rechazo'}
-                        </p>
-                        <p className="font-medium text-gray-700">{absence.comentario_institucion}</p>
-                      </div>
+
+                      {absence.estado === 'rechazada' && (userRole === 'parent' || profile?.id === absence.id_representante) && (
+                        <div className="pt-2 border-t border-red-200/60 flex items-center justify-between gap-3">
+                          <span className="text-xs text-red-700 font-semibold">¿Deseas corregir este justificativo y enviarlo de nuevo?</span>
+                          <button
+                            onClick={() => handleOpenEditModal(absence)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0"
+                          >
+                            <Pencil size={14} />
+                            Corregir y Reenviar
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1309,6 +1402,90 @@ export const Absences: React.FC = () => {
                 className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-100"
               >
                 {deleting ? 'Eliminando...' : 'Eliminar Registro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CORREGIR / REENVIAR JUSTIFICATIVO */}
+      {showEditModal && editingAbsence && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 my-8 border border-blue-100">
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <Pencil size={22} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Corregir y Reenviar Justificativo</h3>
+                  <p className="text-xs text-gray-500 font-medium">Estudiante: <span className="text-gray-900 font-bold">{editingAbsence.nombre_alumno_descripcion}</span> ({editingAbsence.ano_escolar} - {editingAbsence.seccion})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowEditModal(false); setEditingAbsence(null); setEditFile(null); }}
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-xl transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Observación previa del rechazo */}
+            {editingAbsence.comentario_institucion && (
+              <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 text-sm text-red-900">
+                <div className="flex items-center gap-2 font-bold text-red-700 text-xs uppercase tracking-wider mb-1">
+                  <ShieldAlert size={16} />
+                  Observación de Secretaría / Administración:
+                </div>
+                <p className="text-xs text-red-800 font-medium leading-relaxed pl-6">
+                  "{editingAbsence.comentario_institucion}"
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Motivo de la Inasistencia (Actualizado)</label>
+                <textarea
+                  value={editMotivo}
+                  onChange={(e) => setEditMotivo(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none text-sm font-medium text-gray-800"
+                  placeholder="Explique el motivo o detalle las correcciones realizadas..."
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Adjuntar Nuevo Justificativo Corregido (PDF o Imagen)
+                </label>
+                <p className="text-xs text-gray-400 mb-3">
+                  Si la observación solicitó firma, sello o imagen más clara, adjunta aquí el nuevo archivo. Si no seleccionas ninguno, se conservará el archivo previo.
+                </p>
+                <FileUpload
+                  onFileSelect={(file) => setEditFile(file)}
+                  maxSize={5 * 1024 * 1024}
+                  accept=".pdf, .jpg, .jpeg, .png, .webp"
+                  disabled={resubmitting}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+              <button
+                onClick={() => { setShowEditModal(false); setEditingAbsence(null); setEditFile(null); }}
+                className="px-6 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition text-sm"
+                disabled={resubmitting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResubmitAbsence}
+                disabled={resubmitting}
+                className="px-8 py-3 bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-xl font-bold hover:opacity-90 transition shadow-lg shadow-blue-900/20 disabled:opacity-50 flex items-center gap-2 text-sm"
+              >
+                {resubmitting ? 'Reenviando...' : <><RefreshCw size={18} /> Reenviar para Revisión</>}
               </button>
             </div>
           </div>
