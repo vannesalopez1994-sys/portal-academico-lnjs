@@ -451,6 +451,12 @@ export const Absences: React.FC = () => {
   const handleUpdateStatus = async () => {
     if (!selectedAbsence) return;
 
+    if (selectedAbsence.estado === 'aprobada' && modalAction === 'reject') {
+      toast.error('Una inasistencia que ya fue aprobada no se puede rechazar.');
+      setShowModal(false);
+      return;
+    }
+
     let comment = '';
     if (modalAction === 'approve') {
       comment = 'Su solicitud de inasistencia ha sido aprobada satisfactoriamente.';
@@ -1071,28 +1077,32 @@ export const Absences: React.FC = () => {
                 <div className="flex items-center gap-2 shrink-0 md:bg-gray-50 md:p-3 rounded-xl">
                   {(userRole === 'admin' || userRole === 'secretary') && (
                     <>
-                      <button
-                        onClick={() => {
-                          setSelectedAbsence(absence);
-                          setModalAction('approve');
-                          setShowModal(true);
-                        }}
-                        className="p-2.5 bg-white text-green-600 border border-green-100 rounded-lg hover:bg-green-600 hover:text-white transition shadow-sm"
-                        title="Aprobar"
-                      >
-                        <CheckCircle size={20} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedAbsence(absence);
-                          setModalAction('reject');
-                          setShowModal(true);
-                        }}
-                        className="p-2.5 bg-white text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm"
-                        title="Rechazar"
-                      >
-                        <XCircle size={20} />
-                      </button>
+                      {absence.estado !== 'aprobada' && (
+                        <button
+                          onClick={() => {
+                            setSelectedAbsence(absence);
+                            setModalAction('approve');
+                            setShowModal(true);
+                          }}
+                          className="p-2.5 bg-white text-green-600 border border-green-100 rounded-lg hover:bg-green-600 hover:text-white transition shadow-sm"
+                          title="Aprobar Inasistencia"
+                        >
+                          <CheckCircle size={20} />
+                        </button>
+                      )}
+                      {absence.estado === 'pendiente' && (
+                        <button
+                          onClick={() => {
+                            setSelectedAbsence(absence);
+                            setModalAction('reject');
+                            setShowModal(true);
+                          }}
+                          className="p-2.5 bg-white text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm"
+                          title="Rechazar Inasistencia"
+                        >
+                          <XCircle size={20} />
+                        </button>
+                      )}
                     </>
                   )}
                   {userRole === 'admin' && (
