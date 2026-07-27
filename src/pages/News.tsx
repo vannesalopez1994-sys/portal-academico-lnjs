@@ -20,6 +20,10 @@ export const News: React.FC = () => {
   const [editingNews, setEditingNews] = useState<NoticiaConFotos | null>(null);
   const [uploading, setUploading] = useState(false);
   const [newsToDelete, setNewsToDelete] = useState<string | null>(null);
+
+  // Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const POR_PAGINA = 5;
   const [formData, setFormData] = useState({
     titulo: '',
     contenido: '',
@@ -296,63 +300,106 @@ export const News: React.FC = () => {
                 {canManage ? 'Publica el primer aviso o noticia escolar' : 'No hay noticias disponibles en este momento'}
               </p>
             </div>
-          ) : (
-            news.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg border border-blue-100/50 overflow-hidden flex flex-col md:flex-row p-6 md:p-8 gap-6 md:gap-8 hover:border-blue-200 transition-all duration-300"
-              >
-                {item.fotos.length > 0 ? (
-                  <div className="md:w-1/4 h-48 md:h-48 rounded-xl overflow-hidden relative bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                    <img
-                      src={item.fotos[0].ruta_foto}
-                      alt={item.titulo}
-                      className="max-w-full max-h-full object-contain transition duration-300 hover:scale-105"
-                    />
+          ) : (() => {
+            const totalPaginas = Math.ceil(news.length / POR_PAGINA);
+            const inicio = (paginaActual - 1) * POR_PAGINA;
+            const fin = inicio + POR_PAGINA;
+            const noticiasPagina = news.slice(inicio, fin);
+
+            return (
+              <>
+                {noticiasPagina.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-2xl shadow-lg border border-blue-100/50 overflow-hidden flex flex-col md:flex-row p-6 md:p-8 gap-6 md:gap-8 hover:border-blue-200 transition-all duration-300"
+                  >
+                    {item.fotos.length > 0 ? (
+                      <div className="md:w-1/4 h-48 md:h-48 rounded-xl overflow-hidden relative bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                        <img
+                          src={item.fotos[0].ruta_foto}
+                          alt={item.titulo}
+                          className="max-w-full max-h-full object-contain transition duration-300 hover:scale-105"
+                        />
+                      </div>
+                    ) : (
+                      <div className="md:w-1/4 min-h-[160px] bg-[#0d1b3e] border-4 border-[#1a2b54] rounded-2xl flex items-center justify-center p-6 text-white select-none">
+                        <div className="relative w-16 h-16 flex items-center justify-center">
+                          <Globe className="w-12 h-12 text-blue-200 stroke-[1.25]" />
+                          <MessageSquare className="w-6 h-6 text-white absolute -bottom-1 -right-1 fill-[#0d1b3e] stroke-[1.5]" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex-1 flex flex-col justify-between py-1">
+                      <div>
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="text-2xl font-bold text-gray-950 leading-snug">{item.titulo}</h3>
+                          {canManage && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => handleOpenEditModal(item)}
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                title="Editar noticia"
+                              >
+                                <Pencil className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => setNewsToDelete(item.id)}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                title="Eliminar noticia"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mb-4 font-semibold flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                          Publicado el {new Date(item.fecha).toLocaleDateString('es-ES')}
+                        </p>
+                        <div className="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
+                          {item.contenido}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="md:w-1/4 min-h-[160px] bg-[#0d1b3e] border-4 border-[#1a2b54] rounded-2xl flex items-center justify-center p-6 text-white select-none">
-                    <div className="relative w-16 h-16 flex items-center justify-center">
-                      <Globe className="w-12 h-12 text-blue-200 stroke-[1.25]" />
-                      <MessageSquare className="w-6 h-6 text-white absolute -bottom-1 -right-1 fill-[#0d1b3e] stroke-[1.5]" />
+                ))}
+
+                {/* Controles de Paginación para Noticias */}
+                {totalPaginas > 1 && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-blue-100/60 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 mt-2">
+                    <p className="text-xs text-gray-500 font-medium">
+                      Mostrando <span className="font-bold text-gray-800">{inicio + 1}–{Math.min(fin, news.length)}</span> de <span className="font-bold text-gray-800">{news.length}</span> noticias
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setPaginaActual(p => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={paginaActual === 1}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        ← Anterior
+                      </button>
+                      <span className="px-4 py-2 rounded-xl text-xs font-black bg-[#0d2b5e] text-white shadow-sm">
+                        Página {paginaActual} de {totalPaginas}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setPaginaActual(p => Math.min(totalPaginas, p + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={paginaActual === totalPaginas}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        Siguiente →
+                      </button>
                     </div>
                   </div>
                 )}
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div>
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="text-2xl font-bold text-gray-950 leading-snug">{item.titulo}</h3>
-                      {canManage && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => handleOpenEditModal(item)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                            title="Editar noticia"
-                          >
-                            <Pencil className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => setNewsToDelete(item.id)}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                            title="Eliminar noticia"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mb-4 font-semibold flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                      Publicado el {new Date(item.fecha).toLocaleDateString('es-ES')}
-                    </p>
-                    <div className="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
-                      {item.contenido}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+              </>
+            );
+          })()}
         </div>
       </div>
 
