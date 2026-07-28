@@ -19,11 +19,13 @@ export const EvaluationPlans: React.FC = () => {
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
 
 
-  // Filtros de búsqueda
+  // Filtros de búsqueda y paginación
   const [filterAno, setFilterAno] = useState('');
   const [filterSeccion, setFilterSeccion] = useState('');
   const [filterMateria, setFilterMateria] = useState('');
   const [planToDelete, setPlanToDelete] = useState<PlanesEvaluacion | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Form state
   const [anoEscolar, setAnoEscolar] = useState('');
@@ -58,6 +60,11 @@ export const EvaluationPlans: React.FC = () => {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // Reiniciar a la página 1 al cambiar los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterAno, filterSeccion, filterMateria]);
 
   const handleSave = async () => {
     if (!anoEscolar || !seccion || !nombreMateria || !file) {
@@ -152,6 +159,12 @@ export const EvaluationPlans: React.FC = () => {
     const matchMateria = filterMateria ? plan.materia === filterMateria : true;
     return matchAno && matchSeccion && matchMateria;
   });
+
+  const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
+  const paginatedPlans = filteredPlans.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <Layout>
@@ -397,7 +410,7 @@ export const EvaluationPlans: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredPlans.map((plan) => (
+                  {paginatedPlans.map((plan) => (
                     <tr key={plan.id} className="group hover:bg-gray-50/50 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
@@ -457,6 +470,46 @@ export const EvaluationPlans: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Paginación de Planes de Evaluación */}
+          {filteredPlans.length > 0 && (
+            <div className="px-8 py-4 bg-gray-50/50 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Mostrando {Math.min(filteredPlans.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredPlans.length, currentPage * itemsPerPage)} de {filteredPlans.length} planes
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    Anterior
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

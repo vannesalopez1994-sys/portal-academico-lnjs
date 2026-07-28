@@ -18,10 +18,12 @@ export const Schedules: React.FC = () => {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
 
-  // Filtros de búsqueda
+  // Filtros de búsqueda y paginación
   const [filterAno, setFilterAno] = useState('');
   const [filterSeccion, setFilterSeccion] = useState('');
   const [scheduleToDelete, setScheduleToDelete] = useState<Horarios | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Form state
   const [anoEscolar, setAnoEscolar] = useState('');
@@ -52,6 +54,11 @@ export const Schedules: React.FC = () => {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // Reiniciar a la página 1 al cambiar los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterAno, filterSeccion]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +149,12 @@ export const Schedules: React.FC = () => {
     const matchSeccion = filterSeccion ? schedule.seccion === filterSeccion : true;
     return matchAno && matchSeccion;
   });
+
+  const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
+  const paginatedSchedules = filteredSchedules.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <Layout>
@@ -377,7 +390,7 @@ export const Schedules: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredSchedules.map((schedule) => (
+                  {paginatedSchedules.map((schedule) => (
                     <tr key={schedule.id} className="group hover:bg-gray-50/50 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
@@ -437,6 +450,46 @@ export const Schedules: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Paginación de Horarios */}
+          {filteredSchedules.length > 0 && (
+            <div className="px-8 py-4 bg-gray-50/50 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Mostrando {Math.min(filteredSchedules.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredSchedules.length, currentPage * itemsPerPage)} de {filteredSchedules.length} horarios
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    Anterior
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
