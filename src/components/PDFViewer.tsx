@@ -31,11 +31,17 @@ export default function PDFViewer({ isOpen, onClose, fileUrl, fileName }: PDFVie
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in cursor-pointer"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-5xl w-full h-[90vh] flex flex-col overflow-hidden border border-slate-100 cursor-default"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Encabezado Corporativo Premium */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-900 text-white shadow-md shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-900 text-white shadow-md shrink-0">
           <div className="flex items-center gap-3 min-w-0 pr-4">
             <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10 shrink-0">
               {isImage ? (
@@ -45,11 +51,11 @@ export default function PDFViewer({ isOpen, onClose, fileUrl, fileName }: PDFVie
               )}
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-bold truncate text-white tracking-tight" title={fileName}>
+              <h2 className="text-sm sm:text-base font-bold truncate text-white tracking-tight" title={fileName}>
                 {fileName}
               </h2>
-              <p className="text-[11px] text-blue-200/70 font-medium">
-                {isImage ? 'Vista previa de imagen' : 'Documento en formato PDF'}
+              <p className="text-[10px] sm:text-[11px] text-blue-200/70 font-medium">
+                {isImage ? 'Vista previa de imagen' : 'Vista previa de reporte / documento PDF'}
               </p>
             </div>
           </div>
@@ -62,7 +68,7 @@ export default function PDFViewer({ isOpen, onClose, fileUrl, fileName }: PDFVie
               title="Descargar archivo"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Descargar</span>
+              <span className="hidden sm:inline">Descargar PDF</span>
             </button>
             <button
               onClick={handleOpenInNewTab}
@@ -82,9 +88,9 @@ export default function PDFViewer({ isOpen, onClose, fileUrl, fileName }: PDFVie
         </div>
 
         {/* Contenido del Visor */}
-        <div className="flex-1 bg-slate-900 overflow-auto p-4 flex items-center justify-center min-h-[500px]">
+        <div className="flex-1 bg-slate-900 p-2 sm:p-4 flex items-center justify-center w-full h-full overflow-hidden">
           {isImage ? (
-            <div className="relative max-w-full max-h-full flex items-center justify-center">
+            <div className="relative max-w-full max-h-full flex items-center justify-center overflow-auto">
               <img
                 src={fileUrl}
                 alt={fileName}
@@ -94,7 +100,7 @@ export default function PDFViewer({ isOpen, onClose, fileUrl, fileName }: PDFVie
           ) : (
             <iframe
               src={fileUrl}
-              className="w-full h-full min-h-[550px] rounded-xl bg-white border-0"
+              className="w-full h-full rounded-xl bg-white border-0 shadow-inner"
               title={fileName}
             />
           )}
