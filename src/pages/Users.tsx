@@ -33,10 +33,16 @@ export const Users: React.FC = () => {
   });
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchData = async () => {
     try {
@@ -354,7 +360,7 @@ export const Users: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.map((user) => (
+                {filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{user.nombre_completo}</div>
@@ -412,6 +418,40 @@ export const Users: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Paginación de Usuarios */}
+        {filteredUsers.length > 0 && Math.ceil(filteredUsers.length / itemsPerPage) > 1 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-blue-100/60 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+            <p className="text-xs text-gray-500 font-medium">
+              Mostrando <span className="font-bold text-gray-800">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-gray-800">{filteredUsers.length}</span> usuarios
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                ← Anterior
+              </button>
+              <span className="px-4 py-2 rounded-xl text-xs font-black bg-[#0d2b5e] text-white shadow-sm">
+                Página {currentPage} de {Math.ceil(filteredUsers.length / itemsPerPage)}
+              </span>
+              <button
+                onClick={() => {
+                  setCurrentPage(p => Math.min(Math.ceil(filteredUsers.length / itemsPerPage), p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === Math.ceil(filteredUsers.length / itemsPerPage)}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Siguiente →
+              </button>
+            </div>
           </div>
         )}
       </div>

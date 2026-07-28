@@ -41,7 +41,7 @@ export const Absences: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'aprobada' | 'rechazada'>('todos');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   const [newAbsence, setNewAbsence] = useState({
     nombre_alumno_descripcion: '',
@@ -1133,37 +1133,33 @@ export const Absences: React.FC = () => {
 
         {/* Paginación de Solicitudes */}
         {viewMode === 'list' && totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-gray-100">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              Mostrando {Math.min(displayedAbsences.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(displayedAbsences.length, currentPage * itemsPerPage)} de {displayedAbsences.length} solicitudes
-            </span>
-            <div className="flex items-center gap-1">
+          <div className="bg-white rounded-2xl shadow-sm border border-blue-100/60 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+            <p className="text-xs text-gray-500 font-medium">
+              Mostrando <span className="font-bold text-gray-800">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, displayedAbsences.length)}</span> de <span className="font-bold text-gray-800">{displayedAbsences.length}</span> solicitudes
+            </p>
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 disabled={currentPage === 1}
-                className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                Anterior
+                ← Anterior
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
-                    currentPage === page
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              <span className="px-4 py-2 rounded-xl text-xs font-black bg-[#0d2b5e] text-white shadow-sm">
+                Página {currentPage} de {totalPages}
+              </span>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() => {
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 disabled={currentPage === totalPages}
-                className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                Siguiente
+                Siguiente →
               </button>
             </div>
           </div>

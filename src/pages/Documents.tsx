@@ -18,6 +18,8 @@ export const Documents: React.FC = () => {
   const [editingDocument, setEditingDocument] = useState<DocumentosInstitucionales | null>(null);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; name: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const [formData, setFormData] = useState({
     titulo: '',
     file: null as File | null,
@@ -242,7 +244,7 @@ export const Documents: React.FC = () => {
               </p>
             </div>
           ) : (
-            documents.map((doc) => (
+            documents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((doc) => (
               <div
                 key={doc.id}
                 className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all duration-300 overflow-hidden flex flex-col"
@@ -316,6 +318,40 @@ export const Documents: React.FC = () => {
             ))
           )}
         </div>
+
+        {/* Paginación de Documentos */}
+        {documents.length > 0 && Math.ceil(documents.length / itemsPerPage) > 1 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-blue-100/60 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
+            <p className="text-xs text-gray-500 font-medium">
+              Mostrando <span className="font-bold text-gray-800">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, documents.length)}</span> de <span className="font-bold text-gray-800">{documents.length}</span> documentos
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                ← Anterior
+              </button>
+              <span className="px-4 py-2 rounded-xl text-xs font-black bg-[#0d2b5e] text-white shadow-sm">
+                Página {currentPage} de {Math.ceil(documents.length / itemsPerPage)}
+              </span>
+              <button
+                onClick={() => {
+                  setCurrentPage(p => Math.min(Math.ceil(documents.length / itemsPerPage), p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === Math.ceil(documents.length / itemsPerPage)}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Siguiente →
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 
