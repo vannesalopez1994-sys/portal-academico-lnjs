@@ -817,8 +817,8 @@ export const Absences: React.FC = () => {
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all border ${
-                    isActive ? `${style.active} scale-105 border-transparent` : `${style.inactive}`
+                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-colors border ${
+                    isActive ? `${style.active} border-transparent` : `${style.inactive}`
                   }`}
                 >
                   {status === 'todos' ? 'Todos' : status === 'pendiente' ? 'Pendiente' : status === 'aprobada' ? 'Aprobada' : 'Rechazada'}
@@ -890,9 +890,9 @@ export const Absences: React.FC = () => {
                                 <button
                                   key={sec.sectionName}
                                   onClick={() => setActiveSections(prev => ({ ...prev, [yearGroup.year]: sec.sectionName }))}
-                                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all shadow-sm ${
+                                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-colors shadow-sm ${
                                     isActive
-                                      ? 'bg-blue-600 text-white shadow-blue-100 scale-105'
+                                      ? 'bg-blue-600 text-white shadow-blue-100 border border-transparent'
                                       : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/80'
                                   }`}
                                 >
