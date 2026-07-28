@@ -25,7 +25,7 @@ export const EvaluationPlans: React.FC = () => {
   const [filterMateria, setFilterMateria] = useState('');
   const [planToDelete, setPlanToDelete] = useState<PlanesEvaluacion | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   // Form state
   const [anoEscolar, setAnoEscolar] = useState('');

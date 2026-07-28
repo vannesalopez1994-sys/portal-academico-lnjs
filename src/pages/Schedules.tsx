@@ -23,7 +23,7 @@ export const Schedules: React.FC = () => {
   const [filterSeccion, setFilterSeccion] = useState('');
   const [scheduleToDelete, setScheduleToDelete] = useState<Horarios | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   // Form state
   const [anoEscolar, setAnoEscolar] = useState('');
