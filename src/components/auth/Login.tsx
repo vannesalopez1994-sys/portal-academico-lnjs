@@ -303,8 +303,12 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                 type="button"
                 onClick={() => {
                   setIsRegistering(!isRegistering);
+                  setEmail('');
+                  setPassword('');
+                  setFullName('');
                   setError('');
                   setSuccess('');
+                  setShowPassword(false);
                 }}
                 className="text-xs text-blue-200/90 hover:text-white transition font-medium hover:underline"
               >
