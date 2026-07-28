@@ -806,20 +806,17 @@ export const Absences: React.FC = () => {
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Filtrar por:</span>
             {(['todos', 'pendiente', 'aprobada', 'rechazada'] as const).map((status) => {
               const isActive = statusFilter === status;
-              const statusStyles = {
-                todos: { active: 'bg-blue-600 text-white shadow-blue-100', inactive: 'bg-white hover:bg-gray-50 text-gray-600 border-gray-250/70' },
-                pendiente: { active: 'bg-orange-500 text-white shadow-orange-100', inactive: 'bg-orange-50/50 hover:bg-orange-50 text-orange-700 border-orange-150' },
-                aprobada: { active: 'bg-green-600 text-white shadow-green-100', inactive: 'bg-green-50/50 hover:bg-green-50 text-green-700 border-green-150' },
-                rechazada: { active: 'bg-red-600 text-white shadow-red-100', inactive: 'bg-red-50/50 hover:bg-red-50 text-red-700 border-red-150' },
+              const colorStyles = {
+                todos:     { active: 'bg-blue-600   text-white  border-blue-600',   inactive: 'bg-white      hover:bg-gray-50   text-gray-600  border-gray-200'  },
+                pendiente: { active: 'bg-orange-500 text-white  border-orange-500', inactive: 'bg-orange-50  hover:bg-orange-100 text-orange-700 border-orange-200' },
+                aprobada:  { active: 'bg-green-600  text-white  border-green-600',  inactive: 'bg-green-50   hover:bg-green-100  text-green-700  border-green-200'  },
+                rechazada: { active: 'bg-red-600    text-white  border-red-600',    inactive: 'bg-red-50     hover:bg-red-100    text-red-700   border-red-200'    },
               };
-              const style = statusStyles[status];
               return (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-colors border ${
-                    isActive ? `${style.active} border-transparent` : `${style.inactive}`
-                  }`}
+                  className={`inline-flex items-center justify-center h-8 px-4 rounded-xl font-bold text-xs tracking-wider uppercase border transition-colors ${isActive ? colorStyles[status].active : colorStyles[status].inactive}`}
                 >
                   {status === 'todos' ? 'Todos' : status === 'pendiente' ? 'Pendiente' : status === 'aprobada' ? 'Aprobada' : 'Rechazada'}
                 </button>
