@@ -41,7 +41,7 @@ export const Absences: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'aprobada' | 'rechazada'>('todos');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 5;
 
   const [newAbsence, setNewAbsence] = useState({
     nombre_alumno_descripcion: '',

@@ -34,7 +34,7 @@ export const Users: React.FC = () => {
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchData();

@@ -638,25 +638,25 @@ export const Statistics: React.FC = () => {
                   </div>
 
                   {/* Controles de Paginación */}
-                  <div className="px-8 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="bg-white rounded-b-2xl border-t border-blue-100/60 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p className="text-xs text-gray-500 font-medium">
-                      Mostrando <span className="font-black text-gray-700">{inicio + 1}–{Math.min(fin, latestConnections.length)}</span> de <span className="font-black text-gray-700">{latestConnections.length}</span> registros
+                      Mostrando <span className="font-bold text-gray-800">{inicio + 1}–{Math.min(fin, latestConnections.length)}</span> de <span className="font-bold text-gray-800">{latestConnections.length}</span> registros
                     </p>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                        onClick={() => { setPaginaActual(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={paginaActual === 1}
-                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
                         ← Anterior
                       </button>
-                      <span className="px-4 py-2 rounded-xl text-xs font-black bg-slate-700 text-white shadow-sm">
+                      <span className="px-4 py-2 rounded-xl text-xs font-black bg-[#0d2b5e] text-white shadow-sm">
                         Página {paginaActual} de {totalPaginas}
                       </span>
                       <button
-                        onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                        onClick={() => { setPaginaActual(p => Math.min(totalPaginas, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={paginaActual === totalPaginas}
-                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
                         Siguiente →
                       </button>
