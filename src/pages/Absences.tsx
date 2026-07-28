@@ -972,7 +972,7 @@ export const Absences: React.FC = () => {
           paginatedAbsences.map((absence) => (
             <div
               key={absence.id}
-              className={`bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 ${getCardBorderColor(absence.estado)} p-6 hover:shadow-md transition-all group`}
+              className={`w-full bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 ${getCardBorderColor(absence.estado)} p-6 hover:shadow-md transition-all group`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex-1">

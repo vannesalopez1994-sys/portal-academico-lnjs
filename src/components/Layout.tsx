@@ -276,7 +276,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, bgClass }) => {
         </div>
       </header>
 
-      <main className="max-w-[95%] mx-auto p-4 flex-grow">
+      <main className="w-full max-w-[95%] mx-auto p-4 flex-grow">
         {children}
       </main>
 
