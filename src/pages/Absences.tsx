@@ -715,7 +715,7 @@ export const Absences: React.FC = () => {
   return (
     <Layout>
       {/* Corporate Page Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-800 rounded-2xl p-6 mb-8 shadow-xl">
+      <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#0a1628] via-[#0d2b5e] to-blue-800 rounded-2xl p-6 mb-8 shadow-xl">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-8 -right-8 w-40 h-40 bg-white rounded-full" />
           <div className="absolute bottom-0 left-1/3 w-28 h-28 bg-white rounded-full" />
@@ -746,7 +746,7 @@ export const Absences: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="w-full space-y-6">
       {userRole !== 'parent' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex gap-2 bg-white p-2 rounded-xl border border-gray-100 w-fit">
@@ -784,7 +784,7 @@ export const Absences: React.FC = () => {
         </div>
       )}
       {viewMode === 'list' && (
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="w-full bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           {/* Buscador — solo visible para admin y secretaría */}
           {userRole !== 'parent' && (
           <div className="relative flex-1 max-w-md w-full">
@@ -850,12 +850,12 @@ export const Absences: React.FC = () => {
 
       {viewMode === 'grouped' ? (
             studentGroups.length === 0 ? (
-              <div className="bg-white rounded-2xl p-16 text-center border border-gray-100">
+              <div className="w-full bg-white rounded-2xl p-16 flex flex-col items-center justify-center text-center border border-gray-100">
                 <BookMarked className="w-10 h-10 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-gray-900">No hay inasistencias registradas</h3>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="w-full space-y-4">
                 {groupedByYearAndSection.map((yearGroup) => {
                   const isExpanded = expandedYear === yearGroup.year;
                   return (
@@ -957,7 +957,7 @@ export const Absences: React.FC = () => {
               </div>
             )
           ) : displayedAbsences.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+          <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-16 flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center mx-auto mb-5">
               <BookMarked className="w-10 h-10 text-gray-300" />
             </div>
