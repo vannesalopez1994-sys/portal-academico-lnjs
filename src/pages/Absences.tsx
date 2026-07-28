@@ -749,16 +749,24 @@ export const Absences: React.FC = () => {
       <div className="space-y-6">
       {userRole !== 'parent' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex gap-4 bg-white p-2 rounded-xl border border-gray-100 w-fit">
+          <div className="flex gap-2 bg-white p-2 rounded-xl border border-gray-100 w-fit">
             <button
               onClick={() => { setViewMode('list'); setSelectedStudentFilter(null); }}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'list' && !selectedStudentFilter ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`inline-flex items-center justify-center h-9 px-4 rounded-lg font-bold text-sm transition-colors ${
+                viewMode === 'list' && !selectedStudentFilter
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
             >
               Todas las Solicitudes
             </button>
             <button
               onClick={() => setViewMode('grouped')}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'grouped' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`inline-flex items-center justify-center h-9 px-4 rounded-lg font-bold text-sm transition-colors ${
+                viewMode === 'grouped'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
             >
               Resumen por Alumno ({studentGroups.length})
             </button>
