@@ -152,7 +152,7 @@ export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
                       <input
                         type="text"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => setFullName(e.target.value.replace(/[0-9]/g, ''))}
                         className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-950 placeholder-slate-400 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
                         placeholder="Ej. María Pérez"
                         required
