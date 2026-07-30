@@ -167,7 +167,9 @@ export const EvaluationPlans: React.FC = () => {
     }
   };
 
-  const uniqueMaterias = Array.from(new Set(plans.map(p => p.materia).filter(Boolean))).sort();
+  const uniqueMaterias = Array.from(
+    new Set([...MATERIAS_PREDEFINIDAS, ...plans.map(p => p.materia).filter(Boolean)])
+  ).sort();
 
   const filteredPlans = plans.filter((plan) => {
     const matchAno = filterAno ? plan.anio_escolar === filterAno : true;
