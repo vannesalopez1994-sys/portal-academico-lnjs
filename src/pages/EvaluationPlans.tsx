@@ -27,10 +27,25 @@ export const EvaluationPlans: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Lista de materias predefinidas institucionales
+  const MATERIAS_PREDEFINIDAS = [
+    'Educación Física',
+    'Idioma',
+    'Innovación Tecnológica',
+    'Geografía Historia y Ciudadanía',
+    'Biología',
+    'Física',
+    'Química',
+    'Orientación Vocacional',
+    'Matemática',
+    'Lenguaje y Literatura',
+  ];
+
   // Form state
   const [anoEscolar, setAnoEscolar] = useState('');
   const [seccion, setSeccion] = useState('');
   const [nombreMateria, setNombreMateria] = useState('');
+  const [isCustomMateria, setIsCustomMateria] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   const canEdit = userRole === 'admin' || userRole === 'secretary';
@@ -110,6 +125,7 @@ export const EvaluationPlans: React.FC = () => {
       setAnoEscolar('');
       setSeccion('');
       setNombreMateria('');
+      setIsCustomMateria(false);
       setFile(null);
 
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -251,18 +267,66 @@ export const EvaluationPlans: React.FC = () => {
                   <GraduationCap size={16} className="text-gray-400" /> Materia *
                 </label>
                 <FieldHelp
-                  hint="Escribe el nombre de la asignatura tal como aparece en el programa escolar."
-                  example="Matemáticas"
+                  hint="Selecciona la materia de la lista o agrega una nueva si no aparece."
+                  example="Matemática"
                   position="bottom"
                 >
-                  <input
-                    type="text"
-                    placeholder="Ej: Matemáticas"
-                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                    value={nombreMateria}
-                    onChange={(e) => setNombreMateria(e.target.value)}
-                    required
-                  />
+                  {!isCustomMateria ? (
+                    <div>
+                      <select
+                        className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                        value={nombreMateria}
+                        onChange={(e) => {
+                          if (e.target.value === '__OTRA__') {
+                            setIsCustomMateria(true);
+                            setNombreMateria('');
+                          } else {
+                            setNombreMateria(e.target.value);
+                          }
+                        }}
+                      >
+                        <option value="">Seleccione materia...</option>
+                        {MATERIAS_PREDEFINIDAS.map((mat) => (
+                          <option key={mat} value={mat}>
+                            {mat}
+                          </option>
+                        ))}
+                        <option value="__OTRA__">+ Agregar otra materia...</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomMateria(true);
+                          setNombreMateria('');
+                        }}
+                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 mt-1.5"
+                      >
+                        + ¿No está en la lista? Escribir nueva materia
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Escribe el nombre de la nueva materia..."
+                        className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                        value={nombreMateria}
+                        onChange={(e) => setNombreMateria(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomMateria(false);
+                          setNombreMateria('');
+                        }}
+                        className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 hover:underline flex items-center gap-1 mt-1.5"
+                      >
+                        ← Seleccionar de la lista de materias
+                      </button>
+                    </div>
+                  )}
                 </FieldHelp>
               </div>
 
