@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { FileUp, CheckCircle, Trash2, Download, AlertCircle, Loader2, GraduationCap, ClipboardList, Layers, Eye } from 'lucide-react';
+import { FileUp, CheckCircle, Trash2, Download, AlertCircle, Loader2, GraduationCap, ClipboardList, Layers, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase, PlanesEvaluacion } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -273,62 +273,51 @@ export const EvaluationPlans: React.FC = () => {
                   example="Matemática"
                   position="bottom"
                 >
-                  {!isCustomMateria ? (
-                    <div>
-                      <select
-                        className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                        value={nombreMateria}
-                        onChange={(e) => {
-                          if (e.target.value === '__OTRA__') {
-                            setIsCustomMateria(true);
-                            setNombreMateria('');
-                          } else {
-                            setNombreMateria(e.target.value);
-                          }
-                        }}
-                      >
-                        <option value="">Seleccione materia...</option>
-                        {MATERIAS_PREDEFINIDAS.map((mat) => (
-                          <option key={mat} value={mat}>
-                            {mat}
-                          </option>
-                        ))}
-                        <option value="__OTRA__">+ Agregar otra materia...</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCustomMateria(true);
-                          setNombreMateria('');
-                        }}
-                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 mt-1.5"
-                      >
-                        + ¿No está en la lista? Escribir nueva materia
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Escribe el nombre de la nueva materia..."
-                        className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                        value={nombreMateria}
-                        onChange={(e) => setNombreMateria(e.target.value)}
-                        required
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCustomMateria(false);
-                          setNombreMateria('');
-                        }}
-                        className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 hover:underline flex items-center gap-1 mt-1.5"
-                      >
-                        ← Seleccionar de la lista de materias
-                      </button>
-                    </div>
-                  )}
+                {!isCustomMateria ? (
+                  <select
+                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                    value={nombreMateria}
+                    onChange={(e) => {
+                      if (e.target.value === '__OTRA__') {
+                        setIsCustomMateria(true);
+                        setNombreMateria('');
+                      } else {
+                        setNombreMateria(e.target.value);
+                      }
+                    }}
+                  >
+                    <option value="">Seleccione materia...</option>
+                    {MATERIAS_PREDEFINIDAS.map((mat) => (
+                      <option key={mat} value={mat}>
+                        {mat}
+                      </option>
+                    ))}
+                    <option value="__OTRA__">+ Agregar otra materia...</option>
+                  </select>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Escribe el nombre de la nueva materia..."
+                      className="w-full border border-gray-200 rounded-xl p-3 pr-10 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                      value={nombreMateria}
+                      onChange={(e) => setNombreMateria(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomMateria(false);
+                        setNombreMateria('');
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-200/50 transition-all"
+                      title="Volver a la lista de materias"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
                 </FieldHelp>
               </div>
 
