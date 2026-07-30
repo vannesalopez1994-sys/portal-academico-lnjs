@@ -486,7 +486,7 @@ export const Users: React.FC = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newUser.fullName}
-                  onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                  onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value.replace(/[0-9]/g, '') })}
                   placeholder="Ej. Juan Pérez"
                 />
               </FieldHelp>
@@ -586,7 +586,7 @@ export const Users: React.FC = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
                   value={editForm.fullName}
-                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value.replace(/[0-9]/g, '') })}
                   placeholder="Ej. Juan Pérez"
                   disabled={editingUser?.correo === 'adminmaster2026l.n.joaquinas@gmail.com'}
                 />
