@@ -301,7 +301,7 @@ export const EvaluationPlans: React.FC = () => {
                       placeholder="Escribe el nombre de la nueva materia..."
                       className="w-full border border-gray-200 rounded-xl p-3 pr-10 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                       value={nombreMateria}
-                      onChange={(e) => setNombreMateria(e.target.value)}
+                      onChange={(e) => setNombreMateria(e.target.value.replace(/[0-9]/g, ''))}
                       required
                       autoFocus
                     />
